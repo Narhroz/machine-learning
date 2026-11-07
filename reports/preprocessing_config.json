@@ -1,0 +1,51 @@
+{
+  "features": [
+    "lead_time",
+    "total_of_special_requests",
+    "country",
+    "market_segment",
+    "customer_type"
+  ],
+  "num_feats": [
+    "lead_time",
+    "total_of_special_requests"
+  ],
+  "cat_feats": [
+    "country",
+    "market_segment",
+    "customer_type"
+  ],
+  "target": "is_canceled",
+  "random_state": 42,
+  "test_size": 0.2,
+  "n_train": 69720,
+  "n_test": 17431,
+  "market_segment_values": [
+    "Aviation",
+    "Complementary",
+    "Corporate",
+    "Direct",
+    "Groups",
+    "Offline TA/TO",
+    "Online TA",
+    "Undefined"
+  ],
+  "customer_type_values": [
+    "Contract",
+    "Group",
+    "Transient",
+    "Transient-Party"
+  ],
+  "top_countries": [
+    "PRT",
+    "GBR",
+    "FRA",
+    "ESP",
+    "DEU",
+    "ITA",
+    "IRL",
+    "BEL",
+    "BRA",
+    "NLD"
+  ]
+}

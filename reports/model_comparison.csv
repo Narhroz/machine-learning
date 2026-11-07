@@ -1,0 +1,7 @@
+model,threshold,Accuracy,Precision,Recall,F1,ROC-AUC,PR-AUC
+LogReg,"thr=0,5",0.777,0.646,0.405,0.498,0.804,0.593
+LogReg,thr=0.30 (OOF),0.737,0.513,0.72,0.599,0.804,0.593
+RandomForest,"thr=0,5",0.793,0.647,0.526,0.581,0.835,0.645
+RandomForest,thr=0.30 (OOF),0.763,0.551,0.715,0.622,0.835,0.645
+XGBoost,"thr=0,5",0.792,0.648,0.52,0.577,0.836,0.647
+XGBoost,thr=0.29 (OOF),0.758,0.541,0.73,0.622,0.836,0.647
