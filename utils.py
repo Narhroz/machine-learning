@@ -100,3 +100,12 @@ def read_json(path):
         return json.loads(Path(path).read_text())
     except Exception:
         return {}
+
+
+def cancel_rate_pct(default=27.0):
+    """Persentase pembatalan setelah duplikat dibuang (dari reports/data_audit_summary.csv, hasil notebook 01)."""
+    try:
+        df = pd.read_csv(REPORTS / "data_audit_summary.csv", index_col=0)
+        return float(df.loc["rasio_batal_dedup_%"].iloc[0])
+    except Exception:
+        return default

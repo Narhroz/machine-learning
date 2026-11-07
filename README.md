@@ -13,6 +13,8 @@ app.py                       halaman prediksi
 pages/1_Model_Evaluation.py  perbandingan model, confusion matrix, kurva
 pages/2_About_Project.py     latar belakang, dataset, keterbatasan
 utils.py                     fungsi bantu (muat model, validasi, prediksi)
+ui.py                        tampilan bersama (CSS, navigasi, nama brand, daftar tim)
+.streamlit/config.toml       tema warna dan pengaturan tampilan
 models/final_model.joblib    dihasilkan notebook 05
 reports/                     model_comparison.csv, preprocessing_config.json, figures/ (dihasilkan notebook 03 dan 05)
 notebooks/                   01_data_understanding ... 05_model_evaluation
@@ -29,6 +31,11 @@ streamlit run app.py
 ```
 
 **Penting:** jalankan aplikasi di environment Python yang sama dengan yang dipakai melatih model (versi scikit-learn dan xgboost harus sama saat memuat file `.joblib`). Kunci versinya dengan `pip freeze > requirements.txt`.
+
+## Mengubah tampilan
+- Nama brand dan nama anggota tim: edit `BRAND` dan `TEAM` di bagian atas `ui.py`.
+- Warna dan font: variabel CSS di `ui.py` (`--ink`, `--lagoon`, `--brass`).
+- Font memakai Google Fonts, sehingga butuh internet; tanpa internet tampilan memakai font bawaan sistem.
 
 ## Catatan
 - Hasil adalah estimasi model, bukan kepastian pembatalan. Aplikasi ini prototipe edukasi.

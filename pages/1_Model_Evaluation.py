@@ -1,59 +1,68 @@
-"""Halaman evaluasi model (FR-08)."""
+"""Evaluasi model (FR-08), tampilan ringkas dengan tab."""
 import pandas as pd
 import streamlit as st
+from ui import inject_css, top_nav, html, BRAND
 from utils import require_artifact, REPORTS, FIGURES, read_json
 
-st.set_page_config(page_title="Model Evaluation", page_icon="📊", layout="wide")
+st.set_page_config(page_title=f"{BRAND} - Evaluasi model", page_icon="📊", layout="wide")
+inject_css()
 artifact = require_artifact()
 cfg = read_json(REPORTS / "preprocessing_config.json")
+NAMES = {"LogReg": "Logistic Regression", "RandomForest": "Random Forest", "XGBoost": "XGBoost"}
+m = artifact.get("metrics_test", {})
+thr = artifact["threshold"]
 
-st.title("📊 Evaluasi Model")
+top_nav()
+html("""<section class="hero" style="grid-template-columns:1fr;padding-bottom:0"><div>
+<h1 style="font-size:2.8rem">Seberapa jago modelnya?</h1>
+<p class="lead">Tiga algoritma dilatih pada data yang sama, lalu diuji sekali pada data yang disimpan terpisah. Di sini kamu bisa lihat siapa yang menang dan di mana model masih sering salah.</p></div></section>""")
 
-# ---- Ringkasan data ----
-st.subheader("Ringkasan data")
-c1, c2, c3 = st.columns(3)
-c1.metric("Data latih", f"{cfg.get('n_train', '-'):,}" if cfg else "-")
-c2.metric("Data uji", f"{cfg.get('n_test', '-'):,}" if cfg else "-")
-c3.metric("Model final", artifact["model_name"])
-st.caption("Dataset Hotel Booking Demand setelah baris duplikat dihapus. Pembagian data 80:20 (stratified, "
-           "random_state=42). Data uji hanya dipakai sekali untuk evaluasi akhir.")
+k = st.columns(4)
+k[0].metric("Model terpilih", NAMES.get(artifact["model_name"], artifact["model_name"]))
+k[1].metric("Data latih", f"{cfg['n_train']:,}" if cfg.get("n_train") else "-")
+k[2].metric("Data uji", f"{cfg['n_test']:,}" if cfg.get("n_test") else "-")
+k[3].metric("Batas penandaan", f"{thr*100:.0f}%")
+st.caption("Pembagian data 80:20 (stratified, random_state=42) setelah baris duplikat dibuang. Data uji hanya dipakai sekali untuk evaluasi akhir.")
 
-# ---- Perbandingan model ----
-st.subheader("Perbandingan tiga model (data uji)")
-path = REPORTS / "model_comparison.csv"
-if path.exists():
-    tbl = pd.read_csv(path, index_col=[0, 1])
-    sel = tbl[tbl.index.get_level_values(1).str.contains("OOF")].droplevel(1)
-    st.write(f"Threshold dipilih dari prediksi out-of-fold pada data latih (≈{artifact['threshold']:.2f}).")
-    st.dataframe(sel.style.format("{:.3f}").highlight_max(axis=0, color="#cfe8ff"))
-    with st.expander("Lihat juga hasil dengan threshold 0,5"):
-        st.dataframe(tbl[~tbl.index.get_level_values(1).str.contains("OOF")].droplevel(1)
-                     .style.format("{:.3f}"))
-    st.caption("Sel yang disorot adalah nilai tertinggi per kolom. Accuracy bukan satu-satunya dasar pemilihan "
-               "model; Recall dan PR-AUC kelas batal diutamakan.")
-else:
-    st.info("`reports/model_comparison.csv` belum ada. Jalankan notebook 05 lalu salin folder `reports/`.")
 
-# ---- Grafik ----
 def show(fname, title, text):
+    st.markdown(f"### {title}")
     p = FIGURES / fname
-    st.subheader(title)
     if p.exists():
         st.image(str(p))
     else:
-        st.info(f"Gambar `{fname}` belum ada di `reports/figures/`.")
+        st.info(f"Gambar `{fname}` belum ada di `reports/figures/`. Jalankan notebook 05 lalu salin folder `reports/`.")
     st.caption(text)
 
-show("confusion_matrices.png", "Confusion matrix",
-     "Baris = kelas sebenarnya, kolom = prediksi. False Negative adalah pembatalan yang terlewat; "
-     "False Positive adalah peringatan keliru.")
-show("roc_pr_curves.png", "Kurva ROC dan Precision-Recall",
-     "Semakin ke kiri-atas (ROC) dan semakin ke kanan-atas (PR) semakin baik. Garis putus-putus pada kurva PR "
-     "adalah proporsi pembatalan sebagai pembanding acak.")
-show("threshold_selection.png", "Pemilihan threshold",
-     "Menurunkan threshold menaikkan Recall tetapi menurunkan Precision. Garis putus-putus menandai threshold "
-     "dengan F1 tertinggi pada data latih.")
-show("permutation_importance.png", "Pengaruh fitur",
-     "Penurunan PR-AUC saat fitur diacak. Menunjukkan fitur yang paling dipakai model, bukan hubungan sebab-akibat.")
-show("calibration.png", "Kalibrasi probabilitas",
-     "Semakin dekat ke garis diagonal, semakin sesuai probabilitas prediksi dengan proporsi pembatalan sebenarnya.")
+
+t1, t2, t3, t4 = st.tabs(["Perbandingan model", "Kesalahan model", "Kurva dan batas", "Fitur dan kalibrasi"])
+
+with t1:
+    path = REPORTS / "model_comparison.csv"
+    if path.exists():
+        tbl = pd.read_csv(path, index_col=[0, 1])
+        is_oof = tbl.index.get_level_values(1).str.contains("OOF")
+        st.markdown("### Hasil pada data uji")
+        st.write(f"Batas penandaan ≈{thr*100:.0f}% dipilih dari prediksi out-of-fold pada data latih, bukan dari data uji.")
+        st.dataframe(tbl[is_oof].droplevel(1).rename(index=NAMES).style.format("{:.3f}").highlight_max(axis=0, color="#FBE3A6"))
+        st.caption("Sel kuning = nilai tertinggi per kolom. Accuracy bukan satu-satunya dasar memilih model; "
+                   "Recall dan PR-AUC kelas batal diutamakan karena tujuan utamanya menemukan pembatalan.")
+        with st.expander("Lihat juga hasil dengan batas 50%"):
+            st.dataframe(tbl[~is_oof].droplevel(1).rename(index=NAMES).style.format("{:.3f}"))
+    else:
+        st.info("`reports/model_comparison.csv` belum ada. Jalankan notebook 05 lalu salin folder `reports/`.")
+with t2:
+    show("confusion_matrices.png", "Confusion matrix",
+         "Baris = kondisi sebenarnya, kolom = tebakan model. False Negative adalah pembatalan yang terlewat; "
+         "False Positive adalah peringatan keliru.")
+with t3:
+    show("roc_pr_curves.png", "Kurva ROC dan Precision-Recall",
+         "Makin ke kiri-atas (ROC) dan makin ke kanan-atas (PR), makin bagus. Garis putus-putus pada kurva PR "
+         "adalah proporsi pembatalan, yaitu hasil kalau menebak acak.")
+    show("threshold_selection.png", "Memilih batas penandaan",
+         "Menurunkan batas menaikkan Recall tetapi menurunkan Precision. Garis putus-putus menandai batas dengan F1 tertinggi pada data latih.")
+with t4:
+    show("permutation_importance.png", "Fitur yang paling dipakai model",
+         "Penurunan PR-AUC saat satu fitur diacak. Ini menunjukkan fitur yang paling dipakai model, bukan hubungan sebab-akibat.")
+    show("calibration.png", "Apakah persentasenya masuk akal?",
+         "Makin dekat ke garis diagonal, makin sesuai persentase prediksi dengan proporsi pembatalan sebenarnya.")
