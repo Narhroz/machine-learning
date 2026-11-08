@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="32" fill="url(#bg3)"/>
+  <circle cx="128" cy="126" r="38" fill="#38BDF8" opacity="0.16"/>
+  <!-- Shoulders / Blazer -->
+  <path d="M28 160 C30 120, 54 108, 80 108 C106 108, 130 120, 132 160 Z" fill="#1E293B"/>
+  <polygon points="65,108 80,134 95,108" fill="#F8FAFC"/>
+  <!-- Neck -->
+  <rect x="69" y="88" width="22" height="22" rx="8" fill="#F3C69F"/>
+  <!-- Hair / Hijab / Styled Silhouette -->
+  <path d="M46 68 C46 32, 62 24, 80 24 C98 24, 114 32, 114 68 C114 88, 106 102, 96 108 L64 108 C54 102, 46 88, 46 68 Z" fill="#0F172A"/>
+  <!-- Face -->
+  <rect x="56" y="42" width="48" height="52" rx="23" fill="#F3C69F"/>
+  <!-- Front hair/frame -->
+  <path d="M55 56 C58 40, 70 36, 80 36 C90 36, 102 40, 105 56 C98 46, 89 43, 80 43 C71 43, 62 46, 55 56 Z" fill="#0F172A"/>
+  <!-- Eyebrows -->
+  <path d="M64 57 Q69 55 74 57" fill="none" stroke="#0F172A" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M86 57 Q91 55 96 57" fill="none" stroke="#0F172A" stroke-width="2.6" stroke-linecap="round"/>
+  <!-- Eyes -->
+  <circle cx="69" cy="64" r="3.2" fill="#0F172A"/>
+  <circle cx="91" cy="64" r="3.2" fill="#0F172A"/>
+  <!-- Smile -->
+  <path d="M73 79 Q80 84 87 79" fill="none" stroke="#0F172A" stroke-width="2.8" stroke-linecap="round"/>
+</svg>

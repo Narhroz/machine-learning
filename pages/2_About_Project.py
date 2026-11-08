@@ -14,18 +14,30 @@ html("""<section class="hero" style="grid-template-columns:1fr;padding-bottom:0"
 html("""
 <div class="photo-grid">
 <div class="photo-card">
-<img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon Portugal" loading="lazy"/>
+<div class="hero-carousel" style="height:200px;margin:0;border-radius:0" role="img" aria-label="Carousel City Hotel Lisbon">
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon 1" loading="lazy"/><div class="c-cap">Fasad &amp; Kamar Urban<small>Lisbon, Portugal</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon 2" loading="lazy"/><div class="c-cap">Interior Kamar Bisnis<small>Dominan tamu Online TA</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon 3" loading="lazy"/><div class="c-cap">Area Lobi &amp; Check-in<small>Perputaran reservasi tinggi</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon 4" loading="lazy"/><div class="c-cap">Suite Eksekutif<small>Tamu perjalanan singkat</small></div></div>
+<div class="c-dots"><i></i><i></i><i></i><i></i></div>
+</div>
 <div class="pc-body">
 <span class="pc-tag">City Hotel · Lisbon, Portugal (Rasio batal 29,8%)</span>
-<h4>Hotel Perkotaan & Perjalanan Bisnis</h4>
+<h4>Hotel Perkotaan &amp; Perjalanan Bisnis</h4>
 <p>Mayoritas reservasi dipesan lewat agen travel online (Online TA) dengan perputaran tamu cepat dan risiko pembatalan lebih tinggi.</p>
 </div>
 </div>
 <div class="photo-card">
-<img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80" alt="Resort Hotel Algarve Portugal" loading="lazy"/>
+<div class="hero-carousel" style="height:200px;margin:0;border-radius:0" role="img" aria-label="Carousel Resort Hotel Algarve">
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80" alt="Resort Hotel Algarve 1" loading="lazy"/><div class="c-cap">Pemandangan Pantai Algarve<small>Selatan Portugal</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80" alt="Resort Hotel Algarve 2" loading="lazy"/><div class="c-cap">Kolam Renang Resor<small>Puncak tamu Juli–Agustus</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80" alt="Resort Hotel Algarve 3" loading="lazy"/><div class="c-cap">Vila &amp; Area Bersantai<small>Durasi menginap lebih panjang</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=900&q=80" alt="Resort Hotel Algarve 4" loading="lazy"/><div class="c-cap">Balkon Menghadap Laut<small>Dominan liburan keluarga</small></div></div>
+<div class="c-dots"><i></i><i></i><i></i><i></i></div>
+</div>
 <div class="pc-body">
 <span class="pc-tag">Resort Hotel · Algarve, Portugal (Rasio batal 23,3%)</span>
-<h4>Hotel Resor & Liburan Musiman</h4>
+<h4>Hotel Resor &amp; Liburan Musiman</h4>
 <p>Dominan tamu liburan dengan durasi menginap lebih panjang dan puncak kedatangan pada musim panas Eropa (Juli–Agustus).</p>
 </div>
 </div>

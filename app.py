@@ -135,18 +135,27 @@ dots = "".join('<i class="on"></i>' if i < round(rate) else "<i></i>" for i in r
 html(f"""
 <section class="hero">
 <div>
+<div class="hero-kicker"><span class="k-dot"></span>Model {artifact['model_name']} · Proyek Akhir Pembelajaran Mesin 2026</div>
 <h1>Booking ini bakal batal nggak, ya?</h1>
 <p class="lead">{BRAND} membaca pola dari puluhan ribu reservasi hotel untuk memperkirakan peluang sebuah booking dibatalkan. Isi lima info, jawabannya keluar dalam hitungan detik.</p>
 <div class="hero-cta"><a class="cta" href="#coba">Coba prediksi sekarang</a><a class="ghost" href="#wawasan">Lihat grafik data</a></div>
+<div class="hero-stats">
+<div class="h-stat"><b>87.151</b><span>reservasi unik dipelajari</span></div>
+<div class="h-stat"><b>{metrics.get('ROC-AUC', 0):.2f}</b><span>ROC-AUC pada data uji</span></div>
+<div class="h-stat"><b>{thr*100:.0f}%</b><span>batas penandaan risiko</span></div>
+</div>
 </div>
 <div class="hero-card">
-<div class="hero-photo">
-<img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80" alt="Ilustrasi City & Resort Hotel Portugal" loading="lazy"/>
-<span class="badge">Dataset Portugal 2015–2017 · 87.151 reservasi unik</span>
+<div class="hero-carousel" role="img" aria-label="Galeri foto suasana hotel yang berganti otomatis">
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80" alt="Resort hotel dengan kolam renang" loading="lazy"/><div class="c-cap">Resort Hotel · Algarve<small>Liburan musiman, rasio batal 23,3%</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80" alt="City hotel modern" loading="lazy"/><div class="c-cap">City Hotel · Lisbon<small>Tamu bisnis &amp; online, rasio batal 29,8%</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80" alt="Kamar hotel tepi pantai" loading="lazy"/><div class="c-cap">Kamar dengan pemandangan laut<small>Puncak kedatangan Juli–Agustus</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80" alt="Lobi hotel" loading="lazy"/><div class="c-cap">Lobi &amp; resepsionis<small>Data reservasi 2015–2017</small></div></div>
+<div class="c-dots"><i></i><i></i><i></i><i></i></div>
 </div>
 <div class="dots" role="img" aria-label="{round(rate)} dari 100 kotak berwarna biru">{dots}</div>
 <p class="viz-cap"><b>{round(rate)} dari 100</b> reservasi di data kami akhirnya dibatalkan.</p>
-<p class="viz-note">Data Hotel Booking Demand (City Hotel Lisbon & Resort Hotel Algarve), setelah baris duplikat dibuang.</p>
+<p class="viz-note">Data Hotel Booking Demand (City Hotel Lisbon &amp; Resort Hotel Algarve), setelah baris duplikat dibuang.</p>
 </div>
 </section>
 """)
@@ -155,21 +164,19 @@ html(f"""
 html("""
 <div id="cara"></div>
 <h2>Cara pakainya</h2>
-<div class="steps">
-<div class="step">
-<div class="step-head"><span class="step-badge">01</span><span class="step-tag">Input 5 Fitur</span></div>
-<h4>Masukkan profil reservasi</h4>
-<p>Atur jarak hari sebelum check-in, negara asal tamu, kanal pemesanan, jumlah permintaan khusus, dan tipe pelanggan.</p>
+<div class="how-wrap">
+<div class="how-side">
+<div>
+<span class="hs-kicker">Alur 3 langkah</span>
+<h3>Dari data booking ke skor risiko dalam hitungan detik</h3>
+<p>Tidak perlu paham machine learning. Cukup isi profil reservasi, model yang sudah dilatih akan membandingkannya dengan pola historis.</p>
 </div>
-<div class="step">
-<div class="step-head"><span class="step-badge">02</span><span class="step-tag">Skor Risiko</span></div>
-<h4>Pipeline menghitung peluang</h4>
-<p>Model membandingkan profil ini terhadap 87.151 histori reservasi City & Resort Hotel Portugal secara instan.</p>
+<div class="hs-chips"><span>Jarak pemesanan</span><span>Negara</span><span>Kanal pesan</span><span>Permintaan khusus</span><span>Tipe tamu</span></div>
 </div>
-<div class="step">
-<div class="step-head"><span class="step-badge">03</span><span class="step-tag">Keputusan</span></div>
-<h4>Analisis faktor pendorong</h4>
-<p>Lihat persentase risiko batal, posisinya terhadap ambang batas, serta 3 faktor utama yang mendorong skor tersebut.</p>
+<div class="how-list">
+<div class="how-row"><div class="how-num">01</div><div class="how-body"><h4>Masukkan profil reservasi</h4><p>Atur lima isian di form, atau klik salah satu skenario cepat.</p></div><span class="how-pill">± 30 detik</span></div>
+<div class="how-row"><div class="how-num">02</div><div class="how-body"><h4>Model menghitung peluang batal</h4><p>Pipeline memproses input dan membandingkannya dengan 87 ribu histori reservasi.</p></div><span class="how-pill">Instan</span></div>
+<div class="how-row"><div class="how-num">03</div><div class="how-body"><h4>Baca hasil &amp; faktor pendorong</h4><p>Lihat persentase, posisi terhadap batas, grafik pembanding, dan 3 faktor utama.</p></div><span class="how-pill">Estimasi</span></div>
 </div>
 </div>
 """)
@@ -184,7 +191,8 @@ with st.container(key="preset_bar"):
 
 left, right = st.columns([1.25, 1], gap="large")
 with left:
-    with st.container(border=True):
+    with st.container(key="form_box"):
+        html('<div class="form-banner"><b>Form prediksi pembatalan</b><span>5 input</span></div>')
         st.markdown("##### Soal booking-nya")
         a, b = st.columns(2, gap="medium")
         with a:

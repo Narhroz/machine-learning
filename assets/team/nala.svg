@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="32" fill="url(#bg1)"/>
+  <circle cx="130" cy="30" r="36" fill="#38BDF8" opacity="0.18"/>
+  <!-- Shoulders / Jacket (Male) -->
+  <path d="M26 160 C28 118, 52 106, 80 106 C108 106, 132 118, 134 160 Z" fill="#1E293B"/>
+  <!-- Shirt & Collar -->
+  <polygon points="64,106 80,134 96,106" fill="#E0F2FE"/>
+  <polygon points="75,116 85,116 83,160 77,160" fill="#0EA5E9"/>
+  <!-- Neck -->
+  <rect x="68" y="88" width="24" height="22" rx="8" fill="#F1C27D"/>
+  <!-- Ears -->
+  <circle cx="51" cy="68" r="7" fill="#E0AC69"/>
+  <circle cx="109" cy="68" r="7" fill="#E0AC69"/>
+  <!-- Head -->
+  <rect x="53" y="38" width="54" height="58" rx="25" fill="#F1C27D"/>
+  <!-- Short Male Hair -->
+  <path d="M51 58 C50 34, 65 25, 82 26 C99 26, 111 35, 109 58 C106 46, 98 41, 80 41 C63 41, 55 47, 51 58 Z" fill="#0F172A"/>
+  <!-- Eyebrows -->
+  <rect x="63" y="56" width="11" height="3.2" rx="1.6" fill="#0F172A"/>
+  <rect x="86" y="56" width="11" height="3.2" rx="1.6" fill="#0F172A"/>
+  <!-- Eyes -->
+  <circle cx="68.5" cy="64" r="3.2" fill="#0F172A"/>
+  <circle cx="91.5" cy="64" r="3.2" fill="#0F172A"/>
+  <!-- Glasses frame -->
+  <rect x="60" y="58" width="17" height="12" rx="3" fill="none" stroke="#38BDF8" stroke-width="2"/>
+  <rect x="83" y="58" width="17" height="12" rx="3" fill="none" stroke="#38BDF8" stroke-width="2"/>
+  <line x1="77" y1="63" x2="83" y2="63" stroke="#38BDF8" stroke-width="2"/>
+  <!-- Smile -->
+  <path d="M72 79 Q80 85 88 79" fill="none" stroke="#0F172A" stroke-width="3" stroke-linecap="round"/>
+</svg>
