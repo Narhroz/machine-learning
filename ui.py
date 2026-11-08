@@ -21,7 +21,8 @@ CSS = """
 [data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"],[data-testid="collapsedControl"],[data-testid="stExpandSidebarButton"],[data-testid="stSidebarCollapseButton"]{display:none;}
 #MainMenu,footer{visibility:hidden;}
 header[data-testid="stHeader"]{background:transparent;}
-.block-container{max-width:1120px;padding-top:1rem;padding-bottom:4rem;}
+.block-container{max-width:1120px;padding-top:4.4rem;padding-bottom:4rem;}
+.st-key-topbar{position:relative;z-index:1000001;}
 a:focus-visible,button:focus-visible{outline:3px solid var(--brass);outline-offset:2px;}
 
 .brand{font-size:1.5rem;font-weight:800;line-height:1.1;margin:.2rem 0 0;}
