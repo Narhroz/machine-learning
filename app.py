@@ -25,12 +25,18 @@ for k, v in DEFAULTS.items():
     st.session_state.setdefault(k, v)
 
 PRESETS = {
-    "Pesan online jauh hari": {"in_lead": 200, "in_country": "PRT", "in_segment": "Online TA",
+    "Pesan online jauh hari": {"in_lead": 220, "in_country": "PRT", "in_segment": "Online TA",
                                "in_requests": 0, "in_customer": "Transient"},
     "Tamu perusahaan, mepet": {"in_lead": 3, "in_country": "GBR", "in_segment": "Corporate",
                                "in_requests": 2, "in_customer": "Contract"},
     "Liburan keluarga": {"in_lead": 45, "in_country": "DEU", "in_segment": "Direct",
-                         "in_requests": 2, "in_customer": "Transient-Party"},
+                         "in_requests": 3, "in_customer": "Transient-Party"},
+    "Rombongan tur": {"in_lead": 150, "in_country": "ESP", "in_segment": "Groups",
+                      "in_requests": 0, "in_customer": "Group"},
+    "Backpacker dadakan": {"in_lead": 1, "in_country": "FRA", "in_segment": "Online TA",
+                           "in_requests": 1, "in_customer": "Transient"},
+    "Tamu luar Eropa": {"in_lead": 120, "in_country": OTHER_COUNTRY, "in_segment": "Offline TA/TO",
+                        "in_requests": 2, "in_customer": "Transient"},
 }
 
 
@@ -114,8 +120,8 @@ def build_comparison_chart(inputs, proba, threshold, label):
         yaxis=dict(title=None, tickfont=dict(size=12, color="#0F172A")),
         margin=dict(l=8, r=36, t=38, b=16),
         height=245,
-        paper_bgcolor="#FFFFFF",
-        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Figtree, sans-serif", color="#0F172A"),
         showlegend=False,
     )
@@ -150,18 +156,31 @@ html("""
 <div id="cara"></div>
 <h2>Cara pakainya</h2>
 <div class="steps">
-<div class="step"><h4>1. Isi lima info booking</h4><p>Jarak hari sebelum menginap, negara tamu, asal pemesanan, permintaan khusus, dan tipe pelanggan.</p></div>
-<div class="step"><h4>2. Model menghitung peluang</h4><p>Model pembelajaran mesin yang sudah dilatih dengan data historis membandingkan booking ini dengan pola yang pernah terjadi.</p></div>
-<div class="step"><h4>3. Baca hasilnya</h4><p>Kamu dapat label, persentase peluang batal, dan penjelasan singkat. Hasilnya estimasi, bukan kepastian.</p></div>
+<div class="step">
+<div class="step-head"><span class="step-badge">01</span><span class="step-tag">Input 5 Fitur</span></div>
+<h4>Masukkan profil reservasi</h4>
+<p>Atur jarak hari sebelum check-in, negara asal tamu, kanal pemesanan, jumlah permintaan khusus, dan tipe pelanggan.</p>
+</div>
+<div class="step">
+<div class="step-head"><span class="step-badge">02</span><span class="step-tag">Skor Risiko</span></div>
+<h4>Pipeline menghitung peluang</h4>
+<p>Model membandingkan profil ini terhadap 87.151 histori reservasi City & Resort Hotel Portugal secara instan.</p>
+</div>
+<div class="step">
+<div class="step-head"><span class="step-badge">03</span><span class="step-tag">Keputusan</span></div>
+<h4>Analisis faktor pendorong</h4>
+<p>Lihat persentase risiko batal, posisinya terhadap ambang batas, serta 3 faktor utama yang mendorong skor tersebut.</p>
+</div>
 </div>
 """)
 
 # ------------------------------------------------------------------ prediksi
 html('<div id="coba"></div><h2>Coba sendiri</h2>')
-st.write("Belum punya data? Pilih salah satu contoh, lalu ubah angkanya sesuka kamu.")
-pc = st.columns(len(PRESETS) + 1)
-for col, name in zip(pc, PRESETS):
-    col.button(name, on_click=apply_preset, args=(name,), key=f"preset_{name}")
+st.write("Belum punya data? Klik salah satu skenario cepat di bawah ini, lalu sesuaikan angkanya:")
+with st.container(key="preset_bar"):
+    pc = st.columns(len(PRESETS), gap="small")
+    for col, name in zip(pc, PRESETS):
+        col.button(name, on_click=apply_preset, args=(name,), key=f"preset_{name}")
 
 left, right = st.columns([1.25, 1], gap="large")
 with left:
