@@ -2,11 +2,12 @@
 from datetime import datetime
 from html import escape
 import pandas as pd
+import plotly.graph_objects as go_plotly
 import streamlit as st
 from ui import inject_css, top_nav, html, team_html, BRAND, FAVICON
 from utils import (require_artifact, known_countries, validate_inputs, predict, cancel_rate_pct,
-                   explain_local_drivers, threshold_zone, format_input_value,
-                   COUNTRY_NAMES, OTHER_COUNTRY, SEGMENT_LABELS, CUSTOMER_LABELS,
+                   explain_local_drivers, threshold_zone, format_input_value, historical_benchmarks,
+                   FIGURES, COUNTRY_NAMES, OTHER_COUNTRY, SEGMENT_LABELS, CUSTOMER_LABELS,
                    LEAD_MIN, LEAD_MAX, REQ_MIN, REQ_MAX)
 
 st.set_page_config(page_title=f"{BRAND} - Prediksi pembatalan booking hotel", page_icon=FAVICON, layout="wide")
@@ -67,6 +68,60 @@ def lead_human(d):
     return f"Dipesan lebih dari setahun ({d} hari) sebelum kedatangan; di rentang ekstrem keandalan menurun."
 
 
+def build_comparison_chart(inputs, proba, threshold, label):
+    """Grafik komparasi interaktif (Plotly) antara booking ini dan rata-rata historis."""
+    rows = historical_benchmarks(inputs, proba)[::-1]
+    categories = [r["Kategori"] for r in rows]
+    values = [r["Peluang batal (%)"] for r in rows]
+    colors = []
+    for r in rows:
+        if r["Tipe"] == "Prediksi":
+            colors.append("#EF4444" if label else "#10B981")
+        elif r["Tipe"] == "Rata-rata":
+            colors.append("#64748B")
+        else:
+            colors.append("#0284C7")
+
+    fig = go_plotly.Figure(
+        go_plotly.Bar(
+            x=values,
+            y=categories,
+            orientation="h",
+            marker=dict(color=colors, cornerradius=6),
+            text=[f"{v:.1f}%" for v in values],
+            textposition="outside",
+            cliponaxis=False,
+            hovertemplate="<b>%{y}</b><br>Rasio/peluang batal: %{x:.1f}%<extra></extra>",
+        )
+    )
+    thr_pct = threshold * 100.0
+    fig.add_vline(
+        x=thr_pct,
+        line_width=2,
+        line_dash="dash",
+        line_color="#F59E0B",
+        annotation_text=f"Batas {thr_pct:.0f}%",
+        annotation_position="top right",
+        annotation_font=dict(size=11, color="#B45309"),
+    )
+    fig.update_layout(
+        title=dict(
+            text="Perbandingan dengan Rata-rata Historis (%)",
+            font=dict(family="Bricolage Grotesque, sans-serif", size=15, color="#0F172A"),
+            x=0,
+        ),
+        xaxis=dict(range=[0, max(max(values) + 14, thr_pct + 15, 55)], title=None, showgrid=True, gridcolor="#E2E8F0"),
+        yaxis=dict(title=None, tickfont=dict(size=12, color="#0F172A")),
+        margin=dict(l=8, r=36, t=38, b=16),
+        height=245,
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
+        font=dict(family="Figtree, sans-serif", color="#0F172A"),
+        showlegend=False,
+    )
+    return fig
+
+
 # ------------------------------------------------------------------ nav + hero
 top_nav()
 rate = cancel_rate_pct()
@@ -76,12 +131,16 @@ html(f"""
 <div>
 <h1>Booking ini bakal batal nggak, ya?</h1>
 <p class="lead">{BRAND} membaca pola dari puluhan ribu reservasi hotel untuk memperkirakan peluang sebuah booking dibatalkan. Isi lima info, jawabannya keluar dalam hitungan detik.</p>
-<div class="hero-cta"><a class="cta" href="#coba">Coba prediksi sekarang</a><a class="ghost" href="#cara">Lihat cara kerjanya</a></div>
+<div class="hero-cta"><a class="cta" href="#coba">Coba prediksi sekarang</a><a class="ghost" href="#wawasan">Lihat grafik data</a></div>
 </div>
-<div>
-<div class="dots" role="img" aria-label="{round(rate)} dari 100 kotak berwarna kuning">{dots}</div>
+<div class="hero-card">
+<div class="hero-photo">
+<img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80" alt="Ilustrasi City & Resort Hotel Portugal" loading="lazy"/>
+<span class="badge">Dataset Portugal 2015–2017 · 87.151 reservasi unik</span>
+</div>
+<div class="dots" role="img" aria-label="{round(rate)} dari 100 kotak berwarna biru">{dots}</div>
 <p class="viz-cap"><b>{round(rate)} dari 100</b> reservasi di data kami akhirnya dibatalkan.</p>
-<p class="viz-note">Data Hotel Booking Demand (City Hotel dan Resort Hotel, 2015-2017), setelah baris duplikat dibuang.</p>
+<p class="viz-note">Data Hotel Booking Demand (City Hotel Lisbon & Resort Hotel Algarve), setelah baris duplikat dibuang.</p>
 </div>
 </section>
 """)
@@ -204,6 +263,16 @@ with right:  # FR-04, FR-05, FR-06
         {drivers_block}
         </div>
         """)
+        curr_inputs = res.get("inputs", {
+            "lead_time": int(lead_time), "country": country, "market_segment": segment,
+            "total_of_special_requests": int(requests), "customer_type": customer,
+        })
+        with st.container(border=True):
+            st.plotly_chart(
+                build_comparison_chart(curr_inputs, p, thr, lab),
+                width="stretch",
+                config={"displayModeBar": False},
+            )
 
 # ------------------------------------------------------------------ riwayat & ekspor sesi
 hist_rows = st.session_state.get("history", [])
@@ -220,6 +289,36 @@ if hist_rows:
             width="stretch",
         )
         hc2.button("Hapus riwayat", on_click=clear_history, width="stretch")
+
+# ------------------------------------------------------------------ wawasan visual EDA
+html('<div id="wawasan"></div><h2>Wawasan visual dari data historis</h2>')
+st.write("Grafik eksplorasi dari 87.151 reservasi unik yang menjelaskan pola pembatalan sebelum model dilatih.")
+eda_t1, eda_t2, eda_t3, eda_t4 = st.tabs([
+    "Jarak Pesan, Bulan & Negara",
+    "Segmen & Tipe Tamu",
+    "Permintaan Khusus",
+    "Proporsi Target",
+])
+with eda_t1:
+    p_lt = FIGURES / "leadtime_month_country.png"
+    if p_lt.exists():
+        st.image(str(p_lt), width="stretch")
+    st.caption("Semakin jauh hari pemesanan (lead time), semakin tinggi rasio batal: dari 8,4% (0–7 hari) naik hingga 39,3% (181–365 hari). Sepuluh negara teratas mencakup ≈82% dari total reservasi.")
+with eda_t2:
+    p_cat = FIGURES / "cat_cancel_rate.png"
+    if p_cat.exists():
+        st.image(str(p_cat), width="stretch")
+    st.caption("Pemesanan melalui Online TA memiliki rasio batal tertinggi (35,2%) dibanding Direct (14,7%) dan Corporate (11,9%). Tamu perorangan (Transient) juga lebih sering batal (30,0%) dibanding kontrak/grup.")
+with eda_t3:
+    p_req = FIGURES / "requests_parking.png"
+    if p_req.exists():
+        st.image(str(p_req), width="stretch")
+    st.caption("Tamu dengan permintaan khusus cenderung lebih berkomitmen datang (0 permintaan: 32,9% batal vs 3 permintaan: 17,1% batal). Slot parkir tidak dipakai sebagai fitur karena terindikasi data leakage.")
+with eda_t4:
+    p_tgt = FIGURES / "target_dist.png"
+    if p_tgt.exists():
+        st.image(str(p_tgt), width="stretch")
+    st.caption("Distribusi kelas setelah pembersihan duplikat: sekitar 27,3% reservasi dibatalkan dan 72,7% tidak dibatalkan.")
 
 # ------------------------------------------------------------------ keandalan
 rec, prec = metrics.get("Recall"), metrics.get("Precision")

@@ -205,3 +205,49 @@ def cancel_rate_pct(default=27.0):
         return float(df.loc["rasio_batal_dedup_%"].iloc[0])
     except Exception:
         return default
+
+
+SEGMENT_CANCEL_PCT = {
+    "Online TA": 35.2,
+    "Groups": 27.1,
+    "Aviation": 22.1,
+    "Direct": 14.7,
+    "Offline TA/TO": 14.6,
+    "Complementary": 12.2,
+    "Corporate": 11.9,
+}
+
+REQUEST_CANCEL_PCT = {0: 32.9, 1: 18.2, 2: 17.8, 3: 17.1, 4: 13.8, 5: 11.4}
+
+
+def lead_bucket_benchmark(lead_days):
+    """Rasio batal historis (%) untuk kelompok jarak pemesanan (notebook 02)."""
+    d = int(lead_days)
+    if d <= 7:
+        return "Jarak 0-7 hari", 8.4
+    if d <= 30:
+        return "Jarak 8-30 hari", 25.3
+    if d <= 90:
+        return "Jarak 31-90 hari", 31.8
+    if d <= 180:
+        return "Jarak 91-180 hari", 34.7
+    if d <= 365:
+        return "Jarak 181-365 hari", 39.3
+    return "Jarak >365 hari", 42.0
+
+
+def historical_benchmarks(inputs, proba):
+    """Data bar komparasi antara prediksi booking ini dan rata-rata historis segmen/fitur."""
+    lt_label, lt_pct = lead_bucket_benchmark(inputs.get("lead_time", 60))
+    seg = inputs.get("market_segment", "Online TA")
+    seg_pct = SEGMENT_CANCEL_PCT.get(seg, 27.3)
+    req = int(inputs.get("total_of_special_requests", 0))
+    req_pct = REQUEST_CANCEL_PCT.get(req, 15.0)
+    base_pct = round(cancel_rate_pct(), 1)
+    return [
+        {"Kategori": "Prediksi booking ini", "Peluang batal (%)": round(float(proba) * 100.0, 1), "Tipe": "Prediksi"},
+        {"Kategori": f"Historis {lt_label}", "Peluang batal (%)": lt_pct, "Tipe": "Historis"},
+        {"Kategori": f"Historis segmen {seg}", "Peluang batal (%)": seg_pct, "Tipe": "Historis"},
+        {"Kategori": f"Historis {req} permintaan khusus", "Peluang batal (%)": req_pct, "Tipe": "Historis"},
+        {"Kategori": "Rata-rata seluruh data", "Peluang batal (%)": base_pct, "Tipe": "Rata-rata"},
+    ]

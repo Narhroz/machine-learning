@@ -10,6 +10,7 @@ from utils import (
     predict,
     explain_local_drivers,
     threshold_zone,
+    historical_benchmarks,
     OTHER_COUNTRY,
     LEAD_MIN,
     LEAD_MAX,
@@ -83,6 +84,19 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(threshold_zone(0.31, thr)[0], "near")
         self.assertEqual(threshold_zone(0.60, thr)[0], "high")
         self.assertEqual(threshold_zone(0.05, thr)[0], "low")
+
+    def test_historical_benchmarks(self):
+        inp = {
+            "lead_time": 200,
+            "country": "PRT",
+            "market_segment": "Online TA",
+            "total_of_special_requests": 0,
+            "customer_type": "Transient",
+        }
+        rows = historical_benchmarks(inp, 0.52)
+        self.assertEqual(len(rows), 5)
+        self.assertEqual(rows[0]["Tipe"], "Prediksi")
+        self.assertAlmostEqual(rows[0]["Peluang batal (%)"], 52.0)
 
 
 class TestStreamlitPages(unittest.TestCase):

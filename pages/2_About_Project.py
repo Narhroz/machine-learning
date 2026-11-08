@@ -1,6 +1,7 @@
 """Tentang proyek."""
 import streamlit as st
 from ui import inject_css, top_nav, html, team_html, BRAND, FAVICON
+from utils import FIGURES
 
 st.set_page_config(page_title=f"{BRAND} - Tentang proyek", page_icon=FAVICON, layout="wide")
 inject_css()
@@ -9,6 +10,27 @@ top_nav()
 html("""<section class="hero" style="grid-template-columns:1fr;padding-bottom:0"><div>
 <h1 style="font-size:2.8rem">Cerita di balik proyek ini</h1>
 <p class="lead">Pembatalan booking bikin kamar kosong mendadak dan pendapatan hotel meleset. Kami mencoba menjawabnya dengan data.</p></div></section>""")
+
+html("""
+<div class="photo-grid">
+<div class="photo-card">
+<img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon Portugal" loading="lazy"/>
+<div class="pc-body">
+<span class="pc-tag">City Hotel · Lisbon, Portugal (Rasio batal 29,8%)</span>
+<h4>Hotel Perkotaan & Perjalanan Bisnis</h4>
+<p>Mayoritas reservasi dipesan lewat agen travel online (Online TA) dengan perputaran tamu cepat dan risiko pembatalan lebih tinggi.</p>
+</div>
+</div>
+<div class="photo-card">
+<img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80" alt="Resort Hotel Algarve Portugal" loading="lazy"/>
+<div class="pc-body">
+<span class="pc-tag">Resort Hotel · Algarve, Portugal (Rasio batal 23,3%)</span>
+<h4>Hotel Resor & Liburan Musiman</h4>
+<p>Dominan tamu liburan dengan durasi menginap lebih panjang dan puncak kedatangan pada musim panas Eropa (Juli–Agustus).</p>
+</div>
+</div>
+</div>
+""")
 
 c1, c2 = st.columns(2, gap="large")
 with c1:
@@ -41,5 +63,18 @@ with c2:
         "- Persentase adalah estimasi; sebagian booking yang tidak batal ikut ditandai.\n"
         "- Hasil tidak boleh jadi satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda.\n"
         "- Prototipe edukasi, bukan sistem operasional hotel.")
+
+st.markdown("## Karakteristik Statistik Data")
+da1, da2 = st.tabs(["Distribusi Fitur Numerik", "Korelasi Antar Fitur"])
+with da1:
+    p_num = FIGURES / "numeric_dist.png"
+    if p_num.exists():
+        st.image(str(p_num), width="stretch")
+    st.caption("Distribusi jarak pemesanan (lead_time), lama menginap, jumlah tamu, dan tarif harian rata-rata (ADR) yang cenderung miring ke kanan (right-skewed).")
+with da2:
+    p_cor = FIGURES / "corr_heatmap.png"
+    if p_cor.exists():
+        st.image(str(p_cor), width="stretch")
+    st.caption("Korelasi linear Pearson antar fitur numerik. Hubungan non-linear dan fitur kategorikal ditangkap lebih baik oleh model berbasis pohon (Random Forest & XGBoost).")
 
 html("<h2>Tim</h2>" + team_html())

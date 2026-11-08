@@ -47,8 +47,8 @@ with t1:
             is_oof = tbl.index.get_level_values(1).str.contains("OOF")
             st.markdown("### Hasil pada data uji")
             st.write(f"Batas penandaan ≈{thr*100:.0f}% dipilih dari prediksi out-of-fold pada data latih, bukan dari data uji.")
-            st.dataframe(tbl[is_oof].droplevel(1).rename(index=NAMES).style.format("{:.3f}").highlight_max(axis=0, color="#FBE3A6"))
-            st.caption("Sel kuning = nilai tertinggi per kolom. Accuracy bukan satu-satunya dasar memilih model; "
+            st.dataframe(tbl[is_oof].droplevel(1).rename(index=NAMES).style.format("{:.3f}").highlight_max(axis=0, color="#BAE6FD"))
+            st.caption("Sel biru muda = nilai tertinggi per kolom. Accuracy bukan satu-satunya dasar memilih model; "
                        "Recall dan PR-AUC kelas batal diutamakan karena tujuan utamanya menemukan pembatalan.")
             with st.expander("Lihat juga hasil dengan batas 50%"):
                 st.dataframe(tbl[~is_oof].droplevel(1).rename(index=NAMES).style.format("{:.3f}"))
@@ -56,6 +56,8 @@ with t1:
             st.error("File `reports/model_comparison.csv` ditemukan tetapi formatnya tidak dapat dibaca.")
     else:
         st.info("`reports/model_comparison.csv` belum ada. Jalankan notebook 05 lalu salin folder `reports/`.")
+    show("baseline_comparison.png", "Perbandingan lintas metrik pada validasi silang",
+         "Perbandingan Logistic Regression, Random Forest, dan XGBoost beserta penanganan ketidakseimbangan kelas pada data latih.")
 with t2:
     show("confusion_matrices.png", "Confusion matrix",
          "Baris = kondisi sebenarnya, kolom = tebakan model. False Negative adalah pembatalan yang terlewat; "
