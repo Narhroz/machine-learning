@@ -1,9 +1,14 @@
 """Fungsi bantu untuk aplikasi Hotel Booking Cancellation Prediction."""
 from pathlib import Path
 import json
+import math
+import warnings
 import joblib
 import pandas as pd
 import streamlit as st
+from sklearn.exceptions import InconsistentVersionWarning
+
+warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
 BASE = Path(__file__).resolve().parent
 MODEL_PATH = BASE / "models" / "final_model.joblib"
@@ -39,18 +44,27 @@ CUSTOMER_LABELS = {
 
 @st.cache_resource(show_spinner="Memuat model...")
 def load_artifact():
-    """Memuat pipeline + threshold yang disimpan dari notebook 05. None jika file belum ada."""
+    """Memuat pipeline + threshold yang disimpan dari notebook 05. None jika file belum ada atau rusak."""
     if not MODEL_PATH.exists():
         return None
-    return joblib.load(MODEL_PATH)
+    try:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
+            art = joblib.load(MODEL_PATH)
+    except Exception:
+        return None
+    required = {"pipeline", "model_name", "threshold", "features"}
+    if not isinstance(art, dict) or not required.issubset(art):
+        return None
+    return art
 
 
 def require_artifact():
     art = load_artifact()
     if art is None:
         st.error(
-            "File model `models/final_model.joblib` belum ditemukan. Jalankan notebook "
-            "`05_model_evaluation.ipynb`, lalu salin folder `models/` dan `reports/` ke folder aplikasi ini."
+            "File model `models/final_model.joblib` belum ditemukan atau tidak dapat dibaca. "
+            "Jalankan notebook `05_model_evaluation.ipynb`, lalu salin folder `models/` dan `reports/` ke folder aplikasi ini."
         )
         st.stop()
     return art
@@ -70,10 +84,23 @@ def known_countries(artifact):
     return sorted(COUNTRY_NAMES, key=lambda c: COUNTRY_NAMES[c])
 
 
+def _int_or_none(v):
+    if v is None or isinstance(v, bool):
+        return None
+    if isinstance(v, float) and (math.isnan(v) or math.isinf(v) or not v.is_integer()):
+        return None
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def validate_inputs(d, countries):
     """FR-02: mengembalikan daftar pesan kesalahan (kosong jika valid)."""
     errors = []
-    lt, rq = d.get("lead_time"), d.get("total_of_special_requests")
+    if not isinstance(d, dict):
+        return ["Data input tidak valid."]
+    lt, rq = _int_or_none(d.get("lead_time")), _int_or_none(d.get("total_of_special_requests"))
     if lt is None or not (LEAD_MIN <= lt <= LEAD_MAX):
         errors.append(f"Jarak pemesanan harus berupa angka {LEAD_MIN}-{LEAD_MAX} hari.")
     if rq is None or not (REQ_MIN <= rq <= REQ_MAX):
@@ -95,9 +122,78 @@ def predict(artifact, inputs):
     return proba, label
 
 
+FEATURE_TITLES = {
+    "lead_time": "Jarak pemesanan",
+    "country": "Negara asal tamu",
+    "market_segment": "Asal pemesanan",
+    "total_of_special_requests": "Permintaan khusus",
+    "customer_type": "Tipe pelanggan",
+}
+
+
+def format_input_value(feature, value):
+    """Format nilai input menjadi teks ramah pengguna."""
+    if feature == "lead_time":
+        return f"{int(value)} hari sebelum menginap"
+    if feature == "country":
+        return "Negara lain" if value == OTHER_COUNTRY else f"{COUNTRY_NAMES.get(value, value)} ({value})"
+    if feature == "market_segment":
+        return SEGMENT_LABELS.get(value, str(value))
+    if feature == "total_of_special_requests":
+        return f"{int(value)} permintaan khusus"
+    if feature == "customer_type":
+        return CUSTOMER_LABELS.get(value, str(value))
+    return str(value)
+
+
+def explain_local_drivers(artifact, inputs, baseline=None):
+    """Kontribusi lokal tiap fitur dengan membandingkan prediksi terhadap profil acuan."""
+    base = dict(
+        baseline or {
+            "lead_time": 60,
+            "country": "PRT",
+            "market_segment": "Online TA",
+            "total_of_special_requests": 0,
+            "customer_type": "Transient",
+        }
+    )
+    feats = list(artifact["features"])
+    curr_proba, _ = predict(artifact, inputs)
+    rows = []
+    for f in feats:
+        perturbed = dict(inputs)
+        perturbed[f] = base.get(f, inputs[f])
+        alt_proba, _ = predict(artifact, perturbed)
+        delta_pp = (curr_proba - alt_proba) * 100.0
+        rows.append(
+            {
+                "feature": f,
+                "title": FEATURE_TITLES.get(f, f),
+                "value": format_input_value(f, inputs[f]),
+                "delta_pp": delta_pp,
+            }
+        )
+    rows.sort(key=lambda r: abs(r["delta_pp"]), reverse=True)
+    return rows
+
+
+def threshold_zone(proba, threshold):
+    """Mengembalikan (kode_zona, teks_penjelasan) posisi probabilitas terhadap threshold."""
+    diff_pp = (float(proba) - float(threshold)) * 100.0
+    if abs(diff_pp) < 5.0:
+        return "near", f"Mendekati batas ({diff_pp:+.1f} poin dari batas {threshold*100:.0f}%)"
+    if diff_pp >= 15.0:
+        return "high", f"Jauh di atas batas ({diff_pp:+.1f} poin dari batas {threshold*100:.0f}%)"
+    if diff_pp >= 5.0:
+        return "above", f"Di atas batas ({diff_pp:+.1f} poin dari batas {threshold*100:.0f}%)"
+    if diff_pp <= -15.0:
+        return "low", f"Jauh di bawah batas ({diff_pp:+.1f} poin dari batas {threshold*100:.0f}%)"
+    return "below", f"Di bawah batas ({diff_pp:+.1f} poin dari batas {threshold*100:.0f}%)"
+
+
 def read_json(path):
     try:
-        return json.loads(Path(path).read_text())
+        return json.loads(Path(path).read_text(encoding="utf-8"))
     except Exception:
         return {}
 

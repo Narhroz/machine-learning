@@ -3,6 +3,7 @@ import streamlit as st
 
 BRAND = "StayCheck"          # ganti sesuai nama proyek kelompok
 TAGLINE = "Prediksi pembatalan booking hotel"
+FAVICON = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#2C1E18"/><path d="M18 46V28a14 14 0 0 1 28 0v18" fill="#D48C3B"/><rect x="26" y="34" width="12" height="12" rx="3" fill="#FFFDF9"/><circle cx="32" cy="12" r="3" fill="#F2EAE0"/></svg>"""
 
 # Edit sebelum dikumpulkan: nama, NIM, dan peran masing-masing anggota
 TEAM = [
@@ -13,7 +14,7 @@ TEAM = [
 
 CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap');
-:root{--ink:#10233A;--lagoon:#1D7A8C;--mist:#EAF1F6;--line:#D3E0E9;--brass:#E8A317;--paper:#FFFFFF;--risk:#B4410B;--muted:#4A5B6D;}
+:root{--ink:#2C1E18;--lagoon:#3E6B52;--mist:#F2EAE0;--line:#E4D7C8;--brass:#D48C3B;--paper:#FFFDF9;--risk:#B84A27;--muted:#6E5A4F;}
 .stApp{font-family:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;color:var(--ink);}
 .stApp h1,.stApp h2,.stApp h3,.brand,.display{font-family:'Bricolage Grotesque','Figtree',system-ui,sans-serif;letter-spacing:-0.02em;color:var(--ink);}
 .stApp h2{font-size:1.9rem;font-weight:700;margin-top:2.4rem;}
@@ -54,7 +55,7 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--brass);outline-offs
 .band h2,.band h3{color:#fff!important;margin-top:0;}
 .band .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:1rem;}
 .band .num{font-family:'Bricolage Grotesque',sans-serif;font-size:2.8rem;font-weight:800;color:var(--brass);line-height:1;}
-.band p{color:#D7E3EB;line-height:1.5;margin:.4rem 0 0;}
+.band p{color:#EADFD3;line-height:1.5;margin:.4rem 0 0;}
 .band>p{margin-top:1.6rem;}
 
 .team{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:1rem;}
@@ -79,6 +80,18 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--brass);outline-offs
 .gauge .tick{position:absolute;top:-6px;bottom:-6px;width:4px;border-radius:2px;background:var(--brass);}
 .g-note{color:var(--muted);font-size:.88rem;}
 .r-text{margin:1rem 0 0;line-height:1.6;}
+.r-zone{display:inline-block;margin-top:.55rem;padding:.22rem .7rem;border-radius:999px;font-size:.82rem;font-weight:600;background:var(--mist);color:var(--ink);}
+.result.warn .r-zone{background:#FBE9E2;color:var(--risk);}
+.result.ok .r-zone{background:#E5EFE8;color:var(--lagoon);}
+.r-zone.near{background:#FBF0D9;color:#7A5200;}
+.r-drivers{margin-top:1.1rem;padding-top:.9rem;border-top:1px solid var(--line);}
+.r-drivers h4{font-family:'Bricolage Grotesque',sans-serif;font-size:1.02rem;margin:0 0 .45rem;}
+.r-drivers ul{list-style:none;padding:0;margin:0;display:grid;gap:.35rem;}
+.r-drivers li{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;font-size:.88rem;padding:.3rem .55rem;border-radius:10px;background:var(--mist);}
+.r-drivers li b{font-weight:600;color:var(--ink);}
+.r-drivers .d-up{color:var(--risk);font-weight:600;white-space:nowrap;}
+.r-drivers .d-down{color:var(--lagoon);font-weight:600;white-space:nowrap;}
+.r-drivers .d-flat{color:var(--muted);white-space:nowrap;}
 .fine{color:var(--muted);font-size:.85rem;line-height:1.5;}
 
 .st-key-topbar [data-testid="stHorizontalBlock"]{flex-wrap:nowrap!important;align-items:center;gap:.5rem;}

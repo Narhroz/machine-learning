@@ -18,6 +18,7 @@ ui.py                        tampilan bersama (CSS, navigasi, nama brand, daftar
 models/final_model.joblib    dihasilkan notebook 05
 reports/                     model_comparison.csv, preprocessing_config.json, figures/ (dihasilkan notebook 03 dan 05)
 notebooks/                   01_data_understanding ... 05_model_evaluation
+tests/test_app.py            unit test fungsi bantu + smoke test halaman Streamlit
 requirements.txt
 ```
 
@@ -28,6 +29,10 @@ requirements.txt
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
+```
+4. Untuk menjalankan pengujian otomatis (validasi input, faktor pendorong lokal, dan smoke test ketiga halaman):
+```bash
+python -m unittest discover -s tests -v
 ```
 
 **Penting:** jalankan aplikasi di environment Python yang sama dengan yang dipakai melatih model (versi scikit-learn dan xgboost harus sama saat memuat file `.joblib`). Kunci versinya dengan `pip freeze > requirements.txt`.

@@ -1,11 +1,15 @@
 """StayCheck - beranda + prediksi pembatalan booking hotel (Streamlit)."""
+from datetime import datetime
+from html import escape
+import pandas as pd
 import streamlit as st
-from ui import inject_css, top_nav, html, team_html, BRAND
+from ui import inject_css, top_nav, html, team_html, BRAND, FAVICON
 from utils import (require_artifact, known_countries, validate_inputs, predict, cancel_rate_pct,
+                   explain_local_drivers, threshold_zone, format_input_value,
                    COUNTRY_NAMES, OTHER_COUNTRY, SEGMENT_LABELS, CUSTOMER_LABELS,
-                   LEAD_MIN, REQ_MIN, REQ_MAX)
+                   LEAD_MIN, LEAD_MAX, REQ_MIN, REQ_MAX)
 
-st.set_page_config(page_title=f"{BRAND} - Prediksi pembatalan booking hotel", page_icon="🏨", layout="wide")
+st.set_page_config(page_title=f"{BRAND} - Prediksi pembatalan booking hotel", page_icon=FAVICON, layout="wide")
 inject_css()
 artifact = require_artifact()
 countries = known_countries(artifact)
@@ -47,6 +51,10 @@ def reset_form():  # FR-09
     clear_result()
 
 
+def clear_history():
+    st.session_state["history"] = []
+
+
 def lead_human(d):
     if d == 0:
         return "Dipesan di hari yang sama dengan kedatangan."
@@ -56,7 +64,7 @@ def lead_human(d):
         return f"Dipesan sekitar {round(d/7)} minggu sebelum kedatangan."
     if d < 365:
         return f"Dipesan sekitar {round(d/30)} bulan sebelum kedatangan."
-    return "Dipesan sekitar setahun sebelum kedatangan."
+    return f"Dipesan lebih dari setahun ({d} hari) sebelum kedatangan; di rentang ekstrem keandalan menurun."
 
 
 # ------------------------------------------------------------------ nav + hero
@@ -102,8 +110,9 @@ with left:
         st.markdown("##### Soal booking-nya")
         a, b = st.columns(2, gap="medium")
         with a:
-            lead_time = st.slider("Dipesan berapa hari sebelum menginap?", 0, 365, key="in_lead",
-                                  on_change=clear_result)
+            lead_time = st.slider("Dipesan berapa hari sebelum menginap?", LEAD_MIN, 365, key="in_lead",
+                                  on_change=clear_result,
+                                  help=f"Rentang umum 0-365 hari (maksimum data latih: {LEAD_MAX} hari).")
             st.caption(lead_human(lead_time))
         with b:
             segment = st.selectbox("Dipesan lewat mana?", list(SEGMENT_LABELS), format_func=SEGMENT_LABELS.get,
@@ -115,13 +124,13 @@ with left:
         with c:
             country = st.selectbox("Tamu berasal dari mana?", country_options, format_func=country_fmt,
                                    key="in_country", on_change=clear_result,
-                                   help="Negara di luar daftar dipilih lewat 'Negara lain'.")
+                                   help=f"{len(countries)} negara teratas punya kategori sendiri; negara di luar daftar dipetakan ke 'Negara lain' oleh pipeline.")
         with d:
             customer = st.selectbox("Tipe pelanggan", list(CUSTOMER_LABELS), format_func=CUSTOMER_LABELS.get,
                                     key="in_customer", on_change=clear_result)
         b1, b2 = st.columns([2, 1])
-        go = b1.button("Prediksi pembatalan", type="primary", use_container_width=True)
-        b2.button("Atur ulang", on_click=reset_form, use_container_width=True)
+        go = b1.button("Prediksi pembatalan", type="primary", width="stretch")
+        b2.button("Atur ulang", on_click=reset_form, width="stretch")
 
 if go:  # FR-02, FR-03
     inputs = {"lead_time": int(lead_time), "country": country, "market_segment": segment,
@@ -134,30 +143,83 @@ if go:  # FR-02, FR-03
         clear_result()
     else:
         proba, label = predict(artifact, inputs)
-        st.session_state["result"] = {"proba": proba, "label": label}
+        drivers = explain_local_drivers(artifact, inputs)
+        st.session_state["result"] = {"proba": proba, "label": label, "inputs": inputs, "drivers": drivers}
+        hist = st.session_state.setdefault("history", [])
+        hist.insert(0, {
+            "Waktu": datetime.now().strftime("%H:%M:%S"),
+            "Jarak (hari)": int(lead_time),
+            "Negara": country_fmt(country),
+            "Asal pemesanan": SEGMENT_LABELS.get(segment, segment),
+            "Permintaan khusus": int(requests),
+            "Tipe pelanggan": CUSTOMER_LABELS.get(customer, customer),
+            "Peluang batal (%)": round(proba * 100, 1),
+            "Status": "Berpotensi batal" if label else "Tidak berpotensi batal",
+        })
+        del hist[10:]
 
 with right:  # FR-04, FR-05, FR-06
     res = st.session_state.get("result")
     if not res:
         html("""
         <div class="panel-empty"><b>Hasilnya muncul di sini</b>
-        Isi form di sebelah kiri, lalu tekan <i>Prediksi pembatalan</i>. Kamu akan melihat label, peluang batal dalam persen, dan batas yang dipakai model.</div>
+        Isi form di sebelah kiri, lalu tekan <i>Prediksi pembatalan</i>. Kamu akan melihat label, peluang batal dalam persen, batas yang dipakai model, dan faktor pendorong utamanya.</div>
         """)
     else:
         p, lab = res["proba"], res["label"]
         pct = f"{p*100:.0f}"
         cls, tag = ("warn", "⚠ Berpotensi dibatalkan") if lab else ("ok", "✓ Tidak berpotensi dibatalkan")
         verdict = "berpotensi dibatalkan" if lab else "tidak berpotensi dibatalkan"
+        z_code, z_text = threshold_zone(p, thr)
+        z_cls = "near" if z_code == "near" else ""
+        drivers = res.get("drivers") or explain_local_drivers(artifact, res.get("inputs", {
+            "lead_time": int(lead_time), "country": country, "market_segment": segment,
+            "total_of_special_requests": int(requests), "customer_type": customer,
+        }))
+        driver_items = []
+        for d_row in drivers[:3]:
+            dp = d_row["delta_pp"]
+            if dp > 0.5:
+                badge = f'<span class="d-up">↑ +{dp:.1f} poin risiko</span>'
+            elif dp < -0.5:
+                badge = f'<span class="d-down">↓ {dp:.1f} poin risiko</span>'
+            else:
+                badge = '<span class="d-flat">≈ netral vs profil acuan</span>'
+            driver_items.append(
+                f'<li><span><b>{escape(d_row["title"])}:</b> {escape(d_row["value"])}</span>{badge}</li>'
+            )
+        drivers_block = (
+            f'<div class="r-drivers"><h4>Mengapa hasilnya seperti ini?</h4>'
+            f'<ul>{"".join(driver_items)}</ul></div>'
+        )
         html(f"""
         <div class="result {cls}">
         <div class="r-tag">{tag}</div>
         <div class="r-num">{pct}<span>%</span></div>
         <div class="r-sub">peluang batal menurut model ({artifact['model_name']})</div>
+        <div class="r-zone {z_cls}">{escape(z_text)}</div>
         <div class="gauge"><div class="fill" style="width:{p*100:.1f}%"></div><div class="tick" style="left:{thr*100:.1f}%"></div></div>
         <div class="g-note">Garis kuning = batas {thr*100:.0f}%. Di atas garis, booking ditandai berpotensi batal. Batas ini sengaja lebih rendah dari 50% supaya model lebih banyak menemukan pembatalan.</div>
         <p class="r-text">Model memperkirakan booking ini <b>{verdict}</b> dengan peluang batal sekitar <b>{pct}%</b>. Ini estimasi dari pola data historis dan tidak menjamin keputusan tamu.</p>
+        {drivers_block}
         </div>
         """)
+
+# ------------------------------------------------------------------ riwayat & ekspor sesi
+hist_rows = st.session_state.get("history", [])
+if hist_rows:
+    with st.expander(f"Riwayat prediksi sesi ini ({len(hist_rows)} percobaan)", expanded=False):
+        hist_df = pd.DataFrame(hist_rows)
+        st.dataframe(hist_df, width="stretch", hide_index=True)
+        hc1, hc2 = st.columns([1, 1])
+        hc1.download_button(
+            "Unduh riwayat (CSV)",
+            data=hist_df.to_csv(index=False).encode("utf-8"),
+            file_name="riwayat_prediksi_staycheck.csv",
+            mime="text/csv",
+            width="stretch",
+        )
+        hc2.button("Hapus riwayat", on_click=clear_history, width="stretch")
 
 # ------------------------------------------------------------------ keandalan
 rec, prec = metrics.get("Recall"), metrics.get("Precision")

@@ -1,10 +1,10 @@
 """Evaluasi model (FR-08), tampilan ringkas dengan tab."""
 import pandas as pd
 import streamlit as st
-from ui import inject_css, top_nav, html, BRAND
+from ui import inject_css, top_nav, html, BRAND, FAVICON
 from utils import require_artifact, REPORTS, FIGURES, read_json
 
-st.set_page_config(page_title=f"{BRAND} - Evaluasi model", page_icon="📊", layout="wide")
+st.set_page_config(page_title=f"{BRAND} - Evaluasi model", page_icon=FAVICON, layout="wide")
 inject_css()
 artifact = require_artifact()
 cfg = read_json(REPORTS / "preprocessing_config.json")
@@ -23,6 +23,8 @@ k[1].metric("Data latih", f"{cfg['n_train']:,}" if cfg.get("n_train") else "-")
 k[2].metric("Data uji", f"{cfg['n_test']:,}" if cfg.get("n_test") else "-")
 k[3].metric("Batas penandaan", f"{thr*100:.0f}%")
 st.caption("Pembagian data 80:20 (stratified, random_state=42) setelah baris duplikat dibuang. Data uji hanya dipakai sekali untuk evaluasi akhir.")
+if not cfg:
+    st.warning("File `reports/preprocessing_config.json` belum ada atau gagal dibaca, sehingga jumlah data latih/uji tidak dapat ditampilkan.")
 
 
 def show(fname, title, text):
@@ -40,15 +42,18 @@ t1, t2, t3, t4 = st.tabs(["Perbandingan model", "Kesalahan model", "Kurva dan ba
 with t1:
     path = REPORTS / "model_comparison.csv"
     if path.exists():
-        tbl = pd.read_csv(path, index_col=[0, 1])
-        is_oof = tbl.index.get_level_values(1).str.contains("OOF")
-        st.markdown("### Hasil pada data uji")
-        st.write(f"Batas penandaan ≈{thr*100:.0f}% dipilih dari prediksi out-of-fold pada data latih, bukan dari data uji.")
-        st.dataframe(tbl[is_oof].droplevel(1).rename(index=NAMES).style.format("{:.3f}").highlight_max(axis=0, color="#FBE3A6"))
-        st.caption("Sel kuning = nilai tertinggi per kolom. Accuracy bukan satu-satunya dasar memilih model; "
-                   "Recall dan PR-AUC kelas batal diutamakan karena tujuan utamanya menemukan pembatalan.")
-        with st.expander("Lihat juga hasil dengan batas 50%"):
-            st.dataframe(tbl[~is_oof].droplevel(1).rename(index=NAMES).style.format("{:.3f}"))
+        try:
+            tbl = pd.read_csv(path, index_col=[0, 1])
+            is_oof = tbl.index.get_level_values(1).str.contains("OOF")
+            st.markdown("### Hasil pada data uji")
+            st.write(f"Batas penandaan ≈{thr*100:.0f}% dipilih dari prediksi out-of-fold pada data latih, bukan dari data uji.")
+            st.dataframe(tbl[is_oof].droplevel(1).rename(index=NAMES).style.format("{:.3f}").highlight_max(axis=0, color="#FBE3A6"))
+            st.caption("Sel kuning = nilai tertinggi per kolom. Accuracy bukan satu-satunya dasar memilih model; "
+                       "Recall dan PR-AUC kelas batal diutamakan karena tujuan utamanya menemukan pembatalan.")
+            with st.expander("Lihat juga hasil dengan batas 50%"):
+                st.dataframe(tbl[~is_oof].droplevel(1).rename(index=NAMES).style.format("{:.3f}"))
+        except Exception:
+            st.error("File `reports/model_comparison.csv` ditemukan tetapi formatnya tidak dapat dibaca.")
     else:
         st.info("`reports/model_comparison.csv` belum ada. Jalankan notebook 05 lalu salin folder `reports/`.")
 with t2:

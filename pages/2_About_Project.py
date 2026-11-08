@@ -1,8 +1,8 @@
 """Tentang proyek."""
 import streamlit as st
-from ui import inject_css, top_nav, html, team_html, BRAND
+from ui import inject_css, top_nav, html, team_html, BRAND, FAVICON
 
-st.set_page_config(page_title=f"{BRAND} - Tentang proyek", page_icon="ℹ️", layout="wide")
+st.set_page_config(page_title=f"{BRAND} - Tentang proyek", page_icon=FAVICON, layout="wide")
 inject_css()
 top_nav()
 
@@ -28,6 +28,11 @@ with c2:
              "jumlah permintaan khusus, dan tipe pelanggan. Tiga algoritma dibandingkan: **Logistic Regression**, "
              "**Random Forest**, dan **XGBoost**. Model dilatih pada data latih, di-tuning dengan cross-validation, "
              "lalu diuji sekali pada data uji.")
+    st.caption(
+        "Catatan pra-pemrosesan: negara di luar 10 negara terbanyak digabung ke kategori `OTHER` oleh pipeline; "
+        "baris `market_segment = Undefined` (2 baris pada data mentah) tidak disediakan sebagai pilihan input "
+        "dan ditangani otomatis oleh encoder dengan `handle_unknown='ignore'`."
+    )
     st.markdown("## Keterbatasan")
     st.markdown(
         "- Data historis 2015-2017 dari konteks hotel tertentu; pola belum tentu berlaku di hotel, negara, atau periode lain.\n"
