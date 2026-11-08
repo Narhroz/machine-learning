@@ -62,6 +62,8 @@ with c2:
         "- Booking yang dibuat mepet dengan tanggal menginap sulit dideteksi.\n"
         "- Persentase adalah estimasi; sebagian booking yang tidak batal ikut ditandai.\n"
         "- Hasil tidak boleh jadi satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda.\n"
+        "- Negara asal tamu dipakai karena berkorelasi dengan pola pembatalan di data, bukan karena negara menyebabkan pembatalan; jangan dipakai untuk membedakan perlakuan tamu.\n"
+        "- Data dibagi acak, bukan berdasarkan waktu, sehingga performa pada periode yang lebih baru belum teruji.\n"
         "- Prototipe edukasi, bukan sistem operasional hotel.")
 
 st.markdown("## Karakteristik Statistik Data")

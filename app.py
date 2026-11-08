@@ -349,7 +349,7 @@ if rec and prec:
     <div class="grid">
     <div><div class="num">±{rec*100:.0f}</div><p>Dari 100 booking yang memang akhirnya batal, model berhasil menandai sekitar {rec*100:.0f}.</p></div>
     <div><div class="num">±{prec*100:.0f}</div><p>Dari 100 booking yang ditandai berpotensi batal, sekitar {prec*100:.0f} benar-benar batal. Sisanya peringatan keliru.</p></div>
-    <div><div class="num">{metrics.get('ROC-AUC', 0):.2f}</div><p>Skor ROC-AUC (maksimum 1,00): ukuran seberapa baik model membedakan booking yang batal dan yang tidak.</p></div>
+    <div><div class="num">{metrics.get('ROC-AUC', 0):.3f}</div><p>Skor ROC-AUC (maksimum 1,00): ukuran seberapa baik model membedakan booking yang batal dan yang tidak.</p></div>
     </div>
     <p>Yang masih sulit: booking yang dibuat mepet dengan tanggal menginap jauh lebih susah ditebak. Detail lengkap ada di halaman Evaluasi model.</p>
     </div>
@@ -357,4 +357,4 @@ if rec and prec:
 
 # ------------------------------------------------------------------ tim
 html("<h2>Tim di balik proyek</h2>" + team_html())
-html('<p class="fine" style="margin-top:2.4rem">Prototipe edukasi untuk proyek akhir Pembelajaran Mesin. Hasil prediksi bukan kepastian dan tidak boleh dipakai sebagai satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda.</p>')
+html('<p class="fine" style="margin-top:2.4rem">Prototipe edukasi untuk proyek akhir Pembelajaran Mesin. Hasil prediksi bukan kepastian dan tidak boleh dipakai sebagai satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda. Negara asal tamu dipakai hanya karena berkorelasi dengan pola pembatalan di data historis, bukan sebagai dasar membedakan tamu.</p>')
