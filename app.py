@@ -68,7 +68,7 @@ html(f"""
 <div>
 <h1>Booking ini bakal batal nggak, ya?</h1>
 <p class="lead">{BRAND} membaca pola dari puluhan ribu reservasi hotel untuk memperkirakan peluang sebuah booking dibatalkan. Isi lima info, jawabannya keluar dalam hitungan detik.</p>
-<a class="cta" href="#coba">Coba prediksi sekarang</a><a class="ghost" href="#cara">Lihat cara kerjanya</a>
+<div class="hero-cta"><a class="cta" href="#coba">Coba prediksi sekarang</a><a class="ghost" href="#cara">Lihat cara kerjanya</a></div>
 </div>
 <div>
 <div class="dots" role="img" aria-label="{round(rate)} dari 100 kotak berwarna kuning">{dots}</div>

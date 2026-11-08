@@ -80,10 +80,34 @@ a:focus-visible,button:focus-visible{outline:3px solid var(--brass);outline-offs
 .r-text{margin:1rem 0 0;line-height:1.6;}
 .fine{color:var(--muted);font-size:.85rem;line-height:1.5;}
 
+.st-key-topbar [data-testid="stHorizontalBlock"]{flex-wrap:nowrap!important;align-items:center;gap:.5rem;}
+.st-key-topbar [data-testid="stColumn"]{min-width:0!important;}
+.st-key-topbar [data-testid="stColumn"]:first-child{flex:1 1 auto!important;width:auto!important;}
+.st-key-topbar [data-testid="stColumn"]:last-child{flex:0 0 auto!important;width:auto!important;}
+.st-key-nav_desktop{flex-direction:row!important;gap:.3rem!important;justify-content:flex-end;align-items:center;}
+.st-key-nav_desktop>div{width:auto!important;}
+.st-key-nav_mobile{display:none!important;}
+.st-key-nav_mobile button{border-radius:999px;font-size:1.35rem;line-height:1;padding:.35rem .9rem;}
+[data-testid="stMetricValue"],[data-testid="stMetricValue"] *{font-size:1.7rem!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.2;}
+
 @media (max-width:820px){
- .hero{grid-template-columns:1fr;gap:1.5rem;padding-top:1.2rem;}
- .hero h1{font-size:2.5rem;}
+ .st-key-nav_desktop{display:none!important;}
+ .st-key-nav_mobile{display:flex!important;justify-content:flex-end;}
+ .block-container{padding-left:1.1rem;padding-right:1.1rem;}
+ .brand{font-size:1.3rem;}
+ .brand small{font-size:.75rem;}
+ .hero{grid-template-columns:1fr;gap:1.6rem;padding:1.4rem 0 .6rem;}
+ .hero h1{font-size:2.15rem;line-height:1.08;margin-bottom:.7rem;}
+ .hero p.lead{font-size:1rem;line-height:1.55;margin-bottom:1.2rem;}
+ .hero-cta{display:flex;flex-direction:column;gap:.6rem;}
+ .hero-cta .cta,.hero-cta .ghost{display:block;text-align:center;margin:0;padding:.8rem 1rem;}
+ .dots{width:min(100%,280px);gap:5px;}
+ .viz-cap{font-size:.98rem;}
+ .stApp h2{font-size:1.5rem;margin-top:1.8rem;}
  .steps,.band .grid,.team{grid-template-columns:1fr;}
+ .band{padding:1.4rem 1.3rem;}
+ .band .num{font-size:2.2rem;}
+ .r-num{font-size:3.2rem;}
 }
 @media (prefers-reduced-motion:reduce){.gauge .fill{transition:none;}}
 """
@@ -98,16 +122,32 @@ def html(s: str):
     st.markdown("\n".join(line.strip() for line in s.strip().splitlines() if line.strip()), unsafe_allow_html=True)
 
 
-def top_nav():
-    c0, c1, c2, c3 = st.columns([5, 1.1, 1.5, 1.5])
-    c0.markdown(f'<div class="brand">{BRAND}<small>{TAGLINE}</small></div>', unsafe_allow_html=True)
-    links = [(c1, "app.py", "Beranda"), (c2, "pages/1_Model_Evaluation.py", "Evaluasi model"),
-             (c3, "pages/2_About_Project.py", "Tentang proyek")]
-    for col, path, label in links:
+NAV = [("app.py", "Beranda"), ("pages/1_Model_Evaluation.py", "Evaluasi model"),
+       ("pages/2_About_Project.py", "Tentang proyek")]
+
+
+def _links():
+    for path, label in NAV:
         try:
-            col.page_link(path, label=label)
+            st.page_link(path, label=label)
         except Exception:
-            col.write(label)
+            st.write(label)
+
+
+def top_nav():
+    """Desktop: tautan sejajar di kanan. Layar kecil: tombol burger (popover) berisi tautan yang sama."""
+    with st.container(key="topbar"):
+        c0, c1 = st.columns([1, 1])
+        c0.markdown(f'<div class="brand">{BRAND}<small>{TAGLINE}</small></div>', unsafe_allow_html=True)
+        with c1:
+            with st.container(key="nav_desktop"):
+                _links()
+            with st.container(key="nav_mobile"):
+                try:
+                    with st.popover("☰"):
+                        _links()
+                except Exception:
+                    _links()
 
 
 def team_html():
