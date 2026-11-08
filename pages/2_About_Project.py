@@ -17,7 +17,7 @@ html("""
 <div class="hero-carousel" style="height:200px;margin:0;border-radius:0" role="img" aria-label="Carousel City Hotel Lisbon">
 <div class="c-slide"><img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon 1" loading="lazy"/><div class="c-cap">Fasad &amp; Kamar Urban<small>Lisbon, Portugal</small></div></div>
 <div class="c-slide"><img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon 2" loading="lazy"/><div class="c-cap">Interior Kamar Bisnis<small>Dominan tamu Online TA</small></div></div>
-<div class="c-slide"><img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon 3" loading="lazy"/><div class="c-cap">Area Lobi &amp; Check-in<small>Perputaran reservasi tinggi</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon 3" loading="lazy"/><div class="c-cap">Arus Kedatangan Harian<small>Perputaran reservasi tinggi</small></div></div>
 <div class="c-slide"><img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80" alt="City Hotel Lisbon 4" loading="lazy"/><div class="c-cap">Suite Eksekutif<small>Tamu perjalanan singkat</small></div></div>
 <div class="c-dots"><i></i><i></i><i></i><i></i></div>
 </div>
