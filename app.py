@@ -5,6 +5,10 @@ import pandas as pd
 import plotly.graph_objects as go_plotly
 import streamlit as st
 from ui import inject_css, top_nav, html, team_html, BRAND, FAVICON
+import importlib
+import utils as _utils
+if not hasattr(_utils, "operational_recommendations"):
+    _utils = importlib.reload(_utils)
 from utils import (require_artifact, known_countries, validate_inputs, predict, cancel_rate_pct,
                    explain_local_drivers, threshold_zone, format_input_value, historical_benchmarks,
                    operational_recommendations, what_if_scenarios, sample_batch_dataframe, predict_batch,
