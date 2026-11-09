@@ -7,6 +7,7 @@ import streamlit as st
 from ui import inject_css, top_nav, html, team_html, BRAND, FAVICON
 from utils import (require_artifact, known_countries, validate_inputs, predict, cancel_rate_pct,
                    explain_local_drivers, threshold_zone, format_input_value, historical_benchmarks,
+                   operational_recommendations, what_if_scenarios, sample_batch_dataframe, predict_batch,
                    FIGURES, COUNTRY_NAMES, OTHER_COUNTRY, SEGMENT_LABELS, CUSTOMER_LABELS,
                    LEAD_MIN, LEAD_MAX, REQ_MIN, REQ_MAX)
 
@@ -20,7 +21,8 @@ metrics = artifact.get("metrics_test", {})
 thr = artifact["threshold"]
 
 DEFAULTS = {"in_lead": 60, "in_country": "PRT" if "PRT" in countries else countries[0],
-            "in_segment": "Online TA", "in_requests": 0, "in_customer": "Transient"}
+            "in_segment": "Online TA", "in_requests": 0, "in_customer": "Transient",
+            "in_adr": 750_000, "in_nights": 2}
 for k, v in DEFAULTS.items():
     st.session_state.setdefault(k, v)
 
@@ -113,13 +115,13 @@ def build_comparison_chart(inputs, proba, threshold, label):
     fig.update_layout(
         title=dict(
             text="Perbandingan dengan Rata-rata Historis (%)",
-            font=dict(family="Bricolage Grotesque, sans-serif", size=15, color="#0F172A"),
+            font=dict(family="Bricolage Grotesque, sans-serif", size=14, color="#0F172A"),
             x=0,
         ),
         xaxis=dict(range=[0, max(max(values) + 14, thr_pct + 15, 55)], title=None, showgrid=True, gridcolor="#E2E8F0"),
-        yaxis=dict(title=None, tickfont=dict(size=12, color="#0F172A")),
-        margin=dict(l=8, r=36, t=38, b=16),
-        height=245,
+        yaxis=dict(title=None, tickfont=dict(size=11.5, color="#0F172A"), automargin=True),
+        margin=dict(l=4, r=32, t=30, b=10),
+        height=205,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Figtree, sans-serif", color="#0F172A"),
@@ -278,28 +280,120 @@ with right:  # FR-04, FR-05, FR-06
             f'<div class="r-drivers"><h4>Mengapa hasilnya seperti ini?</h4>'
             f'<ul>{"".join(driver_items)}</ul></div>'
         )
-        html(f"""
-        <div class="result {cls}">
-        <div class="r-tag">{tag}</div>
-        <div class="r-num">{pct}<span>%</span></div>
-        <div class="r-sub">peluang batal menurut model ({artifact['model_name']})</div>
-        <div class="r-zone {z_cls}">{escape(z_text)}</div>
-        <div class="gauge"><div class="fill" style="width:{p*100:.1f}%"></div><div class="tick" style="left:{thr*100:.1f}%"></div></div>
-        <div class="g-note">Garis kuning = batas {thr*100:.0f}%. Di atas garis, booking ditandai berpotensi batal. Batas ini sengaja lebih rendah dari 50% supaya model lebih banyak menemukan pembatalan.</div>
-        <p class="r-text">Model memperkirakan booking ini <b>{verdict}</b> dengan peluang batal sekitar <b>{pct}%</b>. Ini estimasi dari pola data historis dan tidak menjamin keputusan tamu.</p>
-        {drivers_block}
-        </div>
-        """)
         curr_inputs = res.get("inputs", {
             "lead_time": int(lead_time), "country": country, "market_segment": segment,
             "total_of_special_requests": int(requests), "customer_type": customer,
         })
+        stamp_info, actions = operational_recommendations(p, thr, curr_inputs)
+        stamp_text, stamp_cls = stamp_info
+        actions_html = "".join(f"<li>{escape(act)}</li>" for act in actions)
+        html(f"""
+        <div class="result {cls}">
+        <div class="r-head"><div class="r-tag">{tag}</div><span class="r-stamp {stamp_cls}">{escape(stamp_text)}</span></div>
+        <div class="r-score-row">
+        <div><div class="r-num">{pct}<span>%</span></div><div class="r-sub">peluang batal menurut model ({artifact['model_name']})</div></div>
+        <div class="r-zone {z_cls}">{escape(z_text)}</div>
+        </div>
+        <div class="gauge"><div class="fill" style="width:{p*100:.1f}%"></div><div class="tick" style="left:{thr*100:.1f}%"></div></div>
+        <div class="g-note">Garis kuning = batas {thr*100:.0f}%. Booking ini diperkirakan <b>{verdict}</b> (~{pct}% peluang batal berdasarkan pola historis).</div>
+        {drivers_block}
+        <div class="r-actions"><h4>Rekomendasi langkah operasional hotel</h4><ol>{actions_html}</ol></div>
+        </div>
+        """)
         with st.container(border=True):
             st.plotly_chart(
                 build_comparison_chart(curr_inputs, p, thr, lab),
                 width="stretch",
                 config={"displayModeBar": False},
             )
+
+# ------------------------------------------------------------------ simulasi bisnis & what-if (Muncul bila sudah ada hasil)
+res_active = st.session_state.get("result")
+if res_active:
+    p_act = res_active["proba"]
+    inp_act = res_active["inputs"]
+    st.markdown("### Simulasi lanjutan untuk booking ini")
+    sim_t1, sim_t2 = st.tabs([
+        "Kalkulator Dampak Finansial Kamar",
+        "Simulator Sensitivitas 'Bagaimana Jika...'",
+    ])
+    with sim_t1:
+        fc_in, fc_out = st.columns([1, 2.25], gap="medium")
+        with fc_in:
+            adr_rp = st.number_input("Tarif kamar / malam (Rp)", min_value=100_000, max_value=25_000_000, step=50_000, key="in_adr")
+            nights = st.number_input("Durasi menginap (malam)", min_value=1, max_value=30, step=1, key="in_nights")
+        gross_val = int(adr_rp) * int(nights)
+        exp_loss = int(round(gross_val * p_act))
+        rec_deposit = int(round(gross_val * (0.5 if p_act >= thr else 0.25)))
+        fmt_rp = lambda n: f"Rp {n:,.0f}".replace(",", ".")
+        with fc_out:
+            html(f"""
+            <div class="fin-grid" style="margin-top:.15rem">
+            <div class="fin-card"><small>Total Nilai Reservasi</small><b>{fmt_rp(gross_val)}</b><span>{int(nights)} malam × {fmt_rp(int(adr_rp))}</span></div>
+            <div class="fin-card"><small>Ekspektasi Risiko</small><b>{fmt_rp(exp_loss)}</b><span>Nilai × {p_act*100:.1f}% peluang batal</span></div>
+            <div class="fin-card"><small>Saran Deposit</small><b>{fmt_rp(rec_deposit)}</b><span>{"50% (risiko di atas batas)" if p_act >= thr else "25% (komitmen standar)"}</span></div>
+            </div>
+            """)
+            st.caption("Ekspektasi risiko finansial menunjukkan potensi pendapatan kamar yang berisiko hilang bila booking batal tanpa pengganti.")
+    with sim_t2:
+        st.caption("Perubahan skor prediksi jika satu karakteristik dari booking ini berubah:")
+        wi_rows = what_if_scenarios(artifact, inp_act)
+        wi_cards = []
+        for w in wi_rows:
+            d_val = w["Perubahan (poin %)"]
+            if d_val < -0.5:
+                b_cls, b_txt = "wi-down", f"↓ {d_val:.1f}% (jadi {w['Peluang Baru (%)']:.0f}%)"
+            elif d_val > 0.5:
+                b_cls, b_txt = "wi-up", f"↑ +{d_val:.1f}% (jadi {w['Peluang Baru (%)']:.0f}%)"
+            else:
+                b_cls, b_txt = "wi-flat", f"Tetap {w['Peluang Baru (%)']:.0f}%"
+            wi_cards.append(
+                f'<div class="whatif-item"><div><b>{escape(w["Skenario"])}</b>'
+                f'<small>Peluang batal awal: {p_act*100:.0f}%</small></div>'
+                f'<span class="wi-badge {b_cls}">{b_txt}</span></div>'
+            )
+        html(f'<div class="whatif-grid">{"".join(wi_cards)}</div>')
+
+# ------------------------------------------------------------------ prediksi daftar booking (Batch CSV)
+with st.expander("Prediksi banyak reservasi sekaligus (Simulasi daftar / Upload CSV)", expanded=False):
+    b_top1, b_top2 = st.columns([1.45, 1], gap="medium")
+    sample_df = sample_batch_dataframe()
+    with b_top1:
+        st.caption("Unggah CSV dengan 5 kolom (`lead_time`, `country`, `market_segment`, `total_of_special_requests`, `customer_type`) atau uji langsung dengan sampel:")
+        btn_c1, btn_c2 = st.columns(2, gap="small")
+        btn_c1.download_button(
+            "Unduh template CSV",
+            data=sample_df.to_csv(index=False).encode("utf-8"),
+            file_name="contoh_daftar_booking.csv",
+            mime="text/csv",
+            width="stretch",
+        )
+        use_sample = btn_c2.button("Jalankan 8 sampel", width="stretch")
+    with b_top2:
+        uploaded_csv = st.file_uploader("Unggah CSV daftar booking", type=["csv"], label_visibility="collapsed")
+    batch_source = None
+    if uploaded_csv is not None:
+        try:
+            batch_source = pd.read_csv(uploaded_csv)
+        except Exception as exc:
+            st.error(f"File CSV tidak dapat dibaca: {exc}")
+    elif use_sample or st.session_state.get("batch_demo_active"):
+        st.session_state["batch_demo_active"] = True
+        batch_source = sample_df
+
+    if batch_source is not None:
+        try:
+            batch_out = predict_batch(artifact, batch_source, countries)
+            n_total = len(batch_out)
+            n_risk = int((batch_out["Status Prediksi"] == "Berpotensi batal").sum())
+            avg_prob = float(batch_out["Peluang Batal (%)"].mean())
+            bm1, bm2, bm3 = st.columns(3)
+            bm1.metric("Total reservasi diproses", f"{n_total} baris")
+            bm2.metric("Ditandai berpotensi batal", f"{n_risk} dari {n_total}")
+            bm3.metric("Rata-rata peluang batal", f"{avg_prob:.1f}%")
+            st.dataframe(batch_out, width="stretch", hide_index=True)
+        except Exception as exc:
+            st.error(str(exc))
 
 # ------------------------------------------------------------------ riwayat & ekspor sesi
 hist_rows = st.session_state.get("history", [])

@@ -251,3 +251,137 @@ def historical_benchmarks(inputs, proba):
         {"Kategori": f"Historis {req} permintaan khusus", "Peluang batal (%)": req_pct, "Tipe": "Historis"},
         {"Kategori": "Rata-rata seluruh data", "Peluang batal (%)": base_pct, "Tipe": "Rata-rata"},
     ]
+
+
+def operational_recommendations(proba, threshold, inputs):
+    """Rekomendasi langkah operasional hotel & stamp status berdasarkan skor risiko dan profil booking."""
+    p = float(proba)
+    thr = float(threshold)
+    lt = int(inputs.get("lead_time", 0))
+    req = int(inputs.get("total_of_special_requests", 0))
+    seg = inputs.get("market_segment", "Online TA")
+
+    if p >= thr + 0.15:
+        stamp = ("HIGH RISK · TINDAKAN AKTIF", "stamp-risk")
+        actions = [
+            "Kirim konfirmasi ulang otomatis (WhatsApp/email) pada H-14 dan H-3 sebelum check-in.",
+            "Terapkan kebijakan deposit sebagian atau batas waktu pembatalan gratis (free-cancellation) lebih awal.",
+            "Alokasikan kamar ke kuota cadangan (buffer overbooking terukur) jika dipesan lewat kanal Online TA.",
+        ]
+    elif p >= thr:
+        stamp = ("WATCHLIST · PANTAU KONFIRMASI", "stamp-watch")
+        actions = [
+            "Kirim pesan pengingat ramah H-7 berisi ringkasan fasilitas dan opsi permintaan khusus (misal pilih lantai/tipe bantal).",
+            "Minta konfirmasi perkiraan jam kedatangan (estimated arrival time) untuk menguji komitmen tamu.",
+            "Tawarkan insentif kecil jika tamu mengubah reservasi ke paket non-refundable.",
+        ]
+    else:
+        stamp = ("SECURE BOOKING · SIAPKAN LAYANAN", "stamp-safe")
+        actions = [
+            "Reservasi relatif aman; prioritaskan persiapan kamar sesuai preferensi tamu.",
+            "Tawarkan program upselling pra-kedatangan (paket sarapan, upgrade kamar, atau penjemputan bandara).",
+            "Jika tamu memesan jauh hari, kirim panduan wisata lokal H-3 untuk meningkatkan pengalaman menginap.",
+        ]
+
+    if req == 0 and p >= thr:
+        actions.append("Tamu belum mencatat permintaan khusus — tanyakan preferensi kamar singkat agar keterikatan reservasi meningkat.")
+    elif lt > 120 and seg == "Online TA":
+        actions.append("Jarak pesan >4 bulan via Online TA memiliki histori batal tinggi — jadwalkan verifikasi kartu/metode pembayaran.")
+    return stamp, actions[:3]
+
+
+def what_if_scenarios(artifact, inputs):
+    """Simulasi sensitivitas 'Bagaimana jika...' terhadap perubahan 1 fitur kunci."""
+    curr_proba, _ = predict(artifact, inputs)
+    curr_pct = curr_proba * 100.0
+    scenarios = []
+
+    req = int(inputs.get("total_of_special_requests", 0))
+    if req < REQ_MAX:
+        alt = dict(inputs, total_of_special_requests=min(REQ_MAX, req + 2))
+        p_alt, _ = predict(artifact, alt)
+        scenarios.append({
+            "Skenario": f"Tamu menambah permintaan khusus ({req} → {alt['total_of_special_requests']})",
+            "Peluang Baru (%)": round(p_alt * 100.0, 1),
+            "Perubahan (poin %)": round(p_alt * 100.0 - curr_pct, 1),
+        })
+    else:
+        alt = dict(inputs, total_of_special_requests=0)
+        p_alt, _ = predict(artifact, alt)
+        scenarios.append({
+            "Skenario": f"Permintaan khusus dihapus ({req} → 0)",
+            "Peluang Baru (%)": round(p_alt * 100.0, 1),
+            "Perubahan (poin %)": round(p_alt * 100.0 - curr_pct, 1),
+        })
+
+    seg = inputs.get("market_segment", "Online TA")
+    target_seg = "Direct" if seg != "Direct" else "Online TA"
+    alt_seg = dict(inputs, market_segment=target_seg)
+    p_seg, _ = predict(artifact, alt_seg)
+    scenarios.append({
+        "Skenario": f"Kanal pesan diubah ({seg} → {target_seg})",
+        "Peluang Baru (%)": round(p_seg * 100.0, 1),
+        "Perubahan (poin %)": round(p_seg * 100.0 - curr_pct, 1),
+    })
+
+    lt = int(inputs.get("lead_time", 60))
+    target_lt = 14 if lt > 21 else 150
+    alt_lt = dict(inputs, lead_time=target_lt)
+    p_lt, _ = predict(artifact, alt_lt)
+    scenarios.append({
+        "Skenario": f"Jarak pemesanan diubah ({lt} hari → {target_lt} hari)",
+        "Peluang Baru (%)": round(p_lt * 100.0, 1),
+        "Perubahan (poin %)": round(p_lt * 100.0 - curr_pct, 1),
+    })
+
+    cust = inputs.get("customer_type", "Transient")
+    target_cust = "Transient-Party" if cust == "Transient" else "Transient"
+    alt_cust = dict(inputs, customer_type=target_cust)
+    p_cust, _ = predict(artifact, alt_cust)
+    scenarios.append({
+        "Skenario": f"Tipe tamu diubah ({cust} → {target_cust})",
+        "Peluang Baru (%)": round(p_cust * 100.0, 1),
+        "Perubahan (poin %)": round(p_cust * 100.0 - curr_pct, 1),
+    })
+    return scenarios
+
+
+def sample_batch_dataframe():
+    """Contoh dataset CSV (8 baris) untuk simulasi prediksi batch."""
+    return pd.DataFrame([
+        {"lead_time": 210, "country": "PRT", "market_segment": "Online TA", "total_of_special_requests": 0, "customer_type": "Transient"},
+        {"lead_time": 12, "country": "GBR", "market_segment": "Direct", "total_of_special_requests": 2, "customer_type": "Transient-Party"},
+        {"lead_time": 95, "country": "FRA", "market_segment": "Online TA", "total_of_special_requests": 1, "customer_type": "Transient"},
+        {"lead_time": 4, "country": "DEU", "market_segment": "Corporate", "total_of_special_requests": 1, "customer_type": "Contract"},
+        {"lead_time": 165, "country": "ESP", "market_segment": "Groups", "total_of_special_requests": 0, "customer_type": "Group"},
+        {"lead_time": 38, "country": "ITA", "market_segment": "Online TA", "total_of_special_requests": 3, "customer_type": "Transient"},
+        {"lead_time": 280, "country": "PRT", "market_segment": "Offline TA/TO", "total_of_special_requests": 0, "customer_type": "Transient"},
+        {"lead_time": 19, "country": "NLD", "market_segment": "Direct", "total_of_special_requests": 2, "customer_type": "Transient"},
+    ])
+
+
+def predict_batch(artifact, df, countries):
+    """Menjalankan prediksi batch pada DataFrame yang memiliki 5 kolom fitur."""
+    req_cols = list(artifact["features"])
+    missing = [c for c in req_cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"Kolom wajib belum ada di CSV: {', '.join(missing)}")
+    work = df.copy()
+    work["lead_time"] = pd.to_numeric(work["lead_time"], errors="coerce").fillna(30).clip(LEAD_MIN, LEAD_MAX).astype(int)
+    work["total_of_special_requests"] = (
+        pd.to_numeric(work["total_of_special_requests"], errors="coerce").fillna(0).clip(REQ_MIN, REQ_MAX).astype(int)
+    )
+    valid_countries = set(countries) | {OTHER_COUNTRY}
+    work["country"] = work["country"].astype(str).str.strip().str.upper()
+    work["country"] = work["country"].apply(lambda c: c if c in valid_countries else OTHER_COUNTRY)
+    work["market_segment"] = work["market_segment"].astype(str).str.strip()
+    work["market_segment"] = work["market_segment"].apply(lambda s: s if s in SEGMENT_LABELS else "Online TA")
+    work["customer_type"] = work["customer_type"].astype(str).str.strip()
+    work["customer_type"] = work["customer_type"].apply(lambda c: c if c in CUSTOMER_LABELS else "Transient")
+
+    probas = artifact["pipeline"].predict_proba(work[req_cols])[:, 1]
+    thr = float(artifact["threshold"])
+    out = work[req_cols].copy()
+    out["Peluang Batal (%)"] = (probas * 100.0).round(1)
+    out["Status Prediksi"] = ["Berpotensi batal" if p >= thr else "Tidak berpotensi batal" for p in probas]
+    return out

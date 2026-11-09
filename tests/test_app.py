@@ -11,6 +11,10 @@ from utils import (
     explain_local_drivers,
     threshold_zone,
     historical_benchmarks,
+    operational_recommendations,
+    what_if_scenarios,
+    sample_batch_dataframe,
+    predict_batch,
     OTHER_COUNTRY,
     LEAD_MIN,
     LEAD_MAX,
@@ -97,6 +101,28 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(len(rows), 5)
         self.assertEqual(rows[0]["Tipe"], "Prediksi")
         self.assertAlmostEqual(rows[0]["Peluang batal (%)"], 52.0)
+
+    def test_operational_whatif_and_batch(self):
+        inp = {
+            "lead_time": 200,
+            "country": "PRT",
+            "market_segment": "Online TA",
+            "total_of_special_requests": 0,
+            "customer_type": "Transient",
+        }
+        stamp, actions = operational_recommendations(0.65, 0.30, inp)
+        self.assertEqual(stamp[1], "stamp-risk")
+        self.assertEqual(len(actions), 3)
+
+        wi = what_if_scenarios(self.artifact, inp)
+        self.assertEqual(len(wi), 4)
+        self.assertIn("Perubahan (poin %)", wi[0])
+
+        df_sample = sample_batch_dataframe()
+        out = predict_batch(self.artifact, df_sample, self.countries)
+        self.assertEqual(len(out), len(df_sample))
+        self.assertIn("Peluang Batal (%)", out.columns)
+        self.assertIn("Status Prediksi", out.columns)
 
 
 class TestStreamlitPages(unittest.TestCase):
