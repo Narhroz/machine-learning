@@ -142,9 +142,9 @@ html(f"""
 <section class="hero">
 <div>
 <div class="hero-kicker">Model {artifact['model_name']} · Proyek Akhir Pembelajaran Mesin 2026</div>
-<h1>Booking ini bakal batal nggak, ya?</h1>
-<p class="lead">{BRAND} membaca pola dari puluhan ribu reservasi hotel untuk memperkirakan peluang sebuah booking dibatalkan. Isi lima info, jawabannya keluar dalam hitungan detik.</p>
-<div class="hero-cta"><a class="cta" href="#coba">Coba prediksi sekarang</a><a class="ghost" href="#wawasan">Lihat grafik data</a></div>
+<h1>Prediksi Risiko Pembatalan Booking Hotel dalam Hitungan Detik</h1>
+<p class="lead">Bantu tim reservasi dan operasional hotel mendeteksi booking rawan batal sejak dini dari 5 informasi reservasi — dilatih pada 87.151 histori reservasi City &amp; Resort Hotel.</p>
+<div class="hero-cta"><a class="cta" href="#coba" role="button">Prediksi Booking Sekarang</a><a class="ghost" href="#wawasan" role="button">Lihat Data Historis</a></div>
 <div class="hero-stats">
 <div class="h-stat"><b>87.151</b><span>reservasi unik dipelajari</span></div>
 <div class="h-stat"><b>{metrics.get('ROC-AUC', 0):.2f}</b><span>ROC-AUC pada data uji</span></div>
@@ -153,10 +153,10 @@ html(f"""
 </div>
 <div class="hero-card">
 <div class="hero-carousel" role="img" aria-label="Galeri foto suasana hotel yang berganti otomatis">
-<div class="c-slide"><img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80" alt="Resort hotel dengan kolam renang" loading="lazy"/><div class="c-cap">Resort Hotel · Algarve<small>Liburan musiman, rasio batal 23,3%</small></div></div>
-<div class="c-slide"><img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80" alt="City hotel modern" loading="lazy"/><div class="c-cap">City Hotel · Lisbon<small>Tamu bisnis &amp; online, rasio batal 29,8%</small></div></div>
-<div class="c-slide"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80" alt="Suasana kamar dan balkon resor" loading="lazy"/><div class="c-cap">Pola Musiman · Puncak Juli–Agustus<small>Lead time panjang cenderung lebih rawan batal</small></div></div>
-<div class="c-slide"><img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80" alt="Area kedatangan tamu hotel" loading="lazy"/><div class="c-cap">Rekam Historis · 2015–2017<small>87.151 reservasi dari lebih dari 100 negara asal tamu</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=640&q=72" width="640" height="330" fetchpriority="high" decoding="async" alt="Resort hotel dengan kolam renang"/><div class="c-cap">Resort Hotel · Algarve<small>Liburan musiman, rasio batal 23,3%</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=640&q=70" width="640" height="330" loading="lazy" decoding="async" alt="City hotel modern"/><div class="c-cap">City Hotel · Lisbon<small>Tamu bisnis &amp; online, rasio batal 29,8%</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=640&q=70" width="640" height="330" loading="lazy" decoding="async" alt="Suasana kamar dan balkon resor"/><div class="c-cap">Pola Musiman · Puncak Juli–Agustus<small>Lead time panjang cenderung lebih rawan batal</small></div></div>
+<div class="c-slide"><img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=640&q=70" width="640" height="330" loading="lazy" decoding="async" alt="Area kedatangan tamu hotel"/><div class="c-cap">Rekam Historis · 2015–2017<small>87.151 reservasi dari lebih dari 100 negara asal tamu</small></div></div>
 <div class="c-dots"><i></i><i></i><i></i><i></i></div>
 </div>
 <div class="dots" role="img" aria-label="{round(rate)} dari 100 kotak berwarna biru">{dots}</div>
