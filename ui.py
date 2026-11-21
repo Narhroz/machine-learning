@@ -87,7 +87,7 @@ CSS = """
 [data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"],[data-testid="collapsedControl"],[data-testid="stExpandSidebarButton"],[data-testid="stSidebarCollapseButton"]{display:none;}
 #MainMenu,footer{visibility:hidden;}
 header[data-testid="stHeader"]{background:transparent;height:.75rem;}
-.block-container{max-width:1120px;padding-top:1rem;padding-bottom:3.5rem;}
+.block-container{max-width:2000px;padding-left:2.2rem;padding-right:2.2rem;padding-top:1rem;padding-bottom:3.5rem;}
 .st-key-topbar{position:relative;z-index:1000001;padding-bottom:.35rem;border-bottom:1px solid rgba(148,163,184,.35);margin-bottom:.3rem;}
 a:focus-visible,button:focus-visible{outline:3px solid var(--brass);outline-offset:2px;}
 

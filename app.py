@@ -53,6 +53,36 @@ PRESETS = {
 }
 
 
+# Setiap angka punya slider DAN kotak ketik yang saling sinkron: key -> batas slider (maks) dan batas ketik (hmax)
+NUM_KEYS = ["in_lead", "in_nights", "in_adr", "in_requests", "in_prev"]
+for _k in NUM_KEYS:
+    st.session_state.setdefault(_k + "_n", st.session_state[_k])
+
+
+def _from_slider(k):
+    st.session_state[k + "_n"] = st.session_state[k]
+    clear_result()
+
+
+def _from_number(k, smax):
+    v = st.session_state.get(k + "_n")
+    if v is not None:
+        st.session_state[k] = min(int(v), smax)   # slider dibatasi smax; nilai ketikan tetap dipakai model
+    clear_result()
+
+
+def sync_all():
+    for k in NUM_KEYS:
+        st.session_state[k + "_n"] = st.session_state[k]
+
+
+def num_field(label, k, lo, smax, hmax, help=None):
+    """Slider + kotak ketik manual. Nilai yang dipakai model = nilai kotak ketik."""
+    st.slider(label, lo, smax, key=k, on_change=_from_slider, args=(k,), help=help)
+    return st.number_input(label, min_value=lo, max_value=hmax, step=1, key=k + "_n",
+                           on_change=_from_number, args=(k, smax), label_visibility="collapsed")
+
+
 def clear_result():
     st.session_state.pop("result", None)
 
@@ -62,12 +92,14 @@ def apply_preset(name):
         if k == "in_country" and v not in country_options:
             v = OTHER_COUNTRY
         st.session_state[k] = v
+    sync_all()
     clear_result()
 
 
 def reset_form():  # FR-09
     for k, v in DEFAULTS.items():
         st.session_state[k] = v
+    sync_all()
     clear_result()
 
 
@@ -132,7 +164,7 @@ def build_comparison_chart(inputs, proba, threshold, label):
         xaxis=dict(range=[0, max(max(values) + 14, thr_pct + 15, 55)], title=None, showgrid=True, gridcolor="#E2E8F0"),
         yaxis=dict(title=None, tickfont=dict(size=11.5, color="#0F172A"), automargin=True),
         margin=dict(l=4, r=32, t=30, b=10),
-        height=205,
+        height=300,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Figtree, sans-serif", color="#0F172A"),
@@ -202,49 +234,46 @@ with st.container(key="preset_bar"):
     for col, name in zip(pc, PRESETS):
         col.button(name, on_click=apply_preset, args=(name,), key=f"preset_{name}")
 
-left, right = st.columns([1.25, 1], gap="large")
+left = st.container()     # form (atas, lebar penuh)
+right = st.container()    # hasil (bawah)
 with left:
     with st.container(key="form_box"):
         html('<div class="form-banner"><b>Form prediksi pembatalan</b><span>10 input</span></div>')
         st.markdown("##### Soal booking-nya")
-        a1, a2 = st.columns(2, gap="medium")
-        with a1:
-            lead_time = st.slider("Dipesan berapa hari sebelum menginap?", LEAD_MIN, 365, key="in_lead",
-                                  on_change=clear_result,
-                                  help=f"Rentang umum 0-365 hari (maksimum data latih: {LEAD_MAX} hari).")
+        r1 = st.columns(5, gap="medium")
+        with r1[0]:
+            lead_time = num_field("Dipesan berapa hari sebelum menginap?", "in_lead", LEAD_MIN, 365, LEAD_MAX,
+                                  help=f"Slider sampai 365 hari; ketik manual sampai {LEAD_MAX} hari (maksimum data latih).")
             st.caption(lead_human(lead_time))
-        with a2:
+        with r1[1]:
             segment = st.selectbox("Dipesan lewat mana?", list(SEGMENT_LABELS), format_func=SEGMENT_LABELS.get,
                                    key="in_segment", on_change=clear_result)
-        a3, a4 = st.columns(2, gap="medium")
-        with a3:
+        with r1[2]:
             hotel = st.selectbox("Jenis hotel", list(HOTEL_LABELS), format_func=HOTEL_LABELS.get,
                                  key="in_hotel", on_change=clear_result)
-        with a4:
-            nights = st.slider("Berapa malam menginap?", NIGHTS_MIN, NIGHTS_MAX, key="in_nights", on_change=clear_result)
-        a5, a6 = st.columns(2, gap="medium")
-        with a5:
-            adr = st.slider("Tarif rata-rata per malam (€)", ADR_MIN, ADR_MAX, step=5, key="in_adr", on_change=clear_result,
+        with r1[3]:
+            nights = num_field("Berapa malam menginap?", "in_nights", NIGHTS_MIN, NIGHTS_MAX, NIGHTS_MAX)
+        with r1[4]:
+            adr = num_field("Tarif rata-rata per malam (€)", "in_adr", ADR_MIN, ADR_MAX, ADR_MAX,
                             help="Satuan euro, sesuai data hotel di Portugal. Median data latih sekitar €98.")
-        with a6:
-            requests = st.slider("Berapa permintaan khusus dari tamu?", REQ_MIN, REQ_MAX, key="in_requests",
-                                 on_change=clear_result, help="Contoh: tambahan bed, lantai tinggi, kamar bebas rokok.")
         st.markdown("##### Soal tamunya")
-        c, d = st.columns(2, gap="medium")
-        with c:
+        r2 = st.columns(5, gap="medium")
+        with r2[0]:
+            requests = num_field("Berapa permintaan khusus dari tamu?", "in_requests", REQ_MIN, REQ_MAX, REQ_MAX,
+                                 help="Contoh: tambahan bed, lantai tinggi, kamar bebas rokok.")
+        with r2[1]:
             country = st.selectbox("Tamu berasal dari mana?", country_options, format_func=country_fmt,
                                    key="in_country", on_change=clear_result,
                                    help=f"{len(countries)} negara teratas punya kategori sendiri; negara di luar daftar dipetakan ke 'Negara lain' oleh pipeline.")
-        with d:
+        with r2[2]:
             customer = st.selectbox("Tipe pelanggan", list(CUSTOMER_LABELS), format_func=CUSTOMER_LABELS.get,
                                     key="in_customer", on_change=clear_result)
-        e1, e2 = st.columns(2, gap="medium")
-        with e1:
+        with r2[3]:
             repeat = st.selectbox("Status tamu", [0, 1], format_func=REPEAT_LABELS.get, key="in_repeat", on_change=clear_result)
-        with e2:
-            prev = st.slider("Berapa kali tamu pernah membatalkan sebelumnya?", PREV_MIN, PREV_MAX, key="in_prev",
-                             on_change=clear_result, help="Riwayat dari reservasi-reservasi tamu yang sama sebelum booking ini.")
-        b1, b2 = st.columns([2, 1])
+        with r2[4]:
+            prev = num_field("Berapa kali tamu pernah membatalkan sebelumnya?", "in_prev", PREV_MIN, PREV_MAX, PREV_MAX,
+                             help="Riwayat dari reservasi-reservasi tamu yang sama sebelum booking ini.")
+        b1, b2, _sp = st.columns([1.3, 1, 3.5])
         go = b1.button("Prediksi pembatalan", type="primary", width="stretch")
         b2.button("Atur ulang", on_click=reset_form, width="stretch")
 
@@ -291,7 +320,7 @@ with right:  # FR-04, FR-05, FR-06
     if not res:
         html("""
         <div class="panel-empty"><b>Hasilnya muncul di sini</b>
-        Isi form di sebelah kiri, lalu tekan <i>Prediksi pembatalan</i>. Kamu akan melihat label, peluang batal dalam persen, batas yang dipakai model, dan faktor pendorong utamanya.</div>
+        Isi form di atas, lalu tekan <i>Prediksi pembatalan</i>. Kamu akan melihat label, peluang batal dalam persen, batas yang dipakai model, dan faktor pendorong utamanya.</div>
         """)
     else:
         p, lab = res["proba"], res["label"]
@@ -321,7 +350,9 @@ with right:  # FR-04, FR-05, FR-06
         stamp_info, actions = operational_recommendations(p, thr, curr_inputs)
         stamp_text, stamp_cls = stamp_info
         actions_html = "".join(f"<li>{escape(act)}</li>" for act in actions)
-        html(f"""
+        rc1, rc2 = st.columns([1.15, 1], gap="large")
+        with rc1:
+            html(f"""
         <div class="result {cls}">
         <div class="r-head"><div class="r-tag">{tag}</div><span class="r-stamp {stamp_cls}">{escape(stamp_text)}</span></div>
         <div class="r-score-row">
@@ -334,12 +365,13 @@ with right:  # FR-04, FR-05, FR-06
         <div class="r-actions"><h4>Rekomendasi langkah operasional hotel</h4><ol>{actions_html}</ol></div>
         </div>
         """)
-        with st.container(border=True):
-            st.plotly_chart(
-                build_comparison_chart(curr_inputs, p, thr, lab),
-                width="stretch",
-                config={"displayModeBar": False},
-            )
+        with rc2:
+            with st.container(border=True):
+                st.plotly_chart(
+                    build_comparison_chart(curr_inputs, p, thr, lab),
+                    width="stretch",
+                    config={"displayModeBar": False},
+                )
 
 # ------------------------------------------------------------------ simulasi bisnis & what-if (Muncul bila sudah ada hasil)
 res_active = st.session_state.get("result")
