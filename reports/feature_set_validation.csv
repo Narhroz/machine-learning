@@ -2,12 +2,15 @@ set fitur,n_input,model,ROC-AUC,PR-AUC
 A. 6 input PRD v1.0,6,LogReg (balanced),0.669,0.435
 A. 6 input PRD v1.0,6,RandomForest,0.684,0.46
 A. 6 input PRD v1.0,6,XGBoost,0.696,0.475
-B. 5 input (usulan),5,LogReg (balanced),0.801,0.587
-B. 5 input (usulan),5,RandomForest,0.823,0.624
-B. 5 input (usulan),5,XGBoost,0.832,0.644
-"C. 5 input, adr ganti customer_type",5,LogReg (balanced),0.797,0.571
-"C. 5 input, adr ganti customer_type",5,RandomForest,0.827,0.626
-"C. 5 input, adr ganti customer_type",5,XGBoost,0.835,0.644
-D. 7 input (B + adr + hotel),7,LogReg (balanced),0.807,0.59
-D. 7 input (B + adr + hotel),7,RandomForest,0.845,0.667
-D. 7 input (B + adr + hotel),7,XGBoost,0.849,0.676
+B. 5 input (PRD v1.1),5,LogReg (balanced),0.801,0.587
+B. 5 input (PRD v1.1),5,RandomForest,0.823,0.624
+B. 5 input (PRD v1.1),5,XGBoost,0.832,0.644
+C. 7 input lama (B + adr + hotel),7,LogReg (balanced),0.807,0.589
+C. 7 input lama (B + adr + hotel),7,RandomForest,0.845,0.667
+C. 7 input lama (B + adr + hotel),7,XGBoost,0.849,0.676
+D. 7 input (B + prev_canc + repeated),7,LogReg (balanced),0.808,0.606
+D. 7 input (B + prev_canc + repeated),7,RandomForest,0.835,0.654
+D. 7 input (B + prev_canc + repeated),7,XGBoost,0.84,0.668
+E. 10 input (USULAN v1.2),10,LogReg (balanced),0.815,0.61
+E. 10 input (USULAN v1.2),10,RandomForest,0.856,0.697
+E. 10 input (USULAN v1.2),10,XGBoost,0.859,0.705

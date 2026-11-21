@@ -58,8 +58,9 @@ with c1:
                 "https://doi.org/10.1016/j.dib.2018.11.126")
 with c2:
     st.markdown("## Yang kami bangun")
-    st.write("Model memakai lima input: jarak pemesanan ke kedatangan, negara asal tamu, asal pemesanan, "
-             "jumlah permintaan khusus, dan tipe pelanggan. Tiga algoritma dibandingkan: **Logistic Regression**, "
+    st.write("Model memakai sepuluh input: jarak pemesanan ke kedatangan, negara asal tamu, asal pemesanan, "
+             "jumlah permintaan khusus, tipe pelanggan, jenis hotel, lama menginap, tarif rata-rata per malam, "
+             "jumlah pembatalan sebelumnya, dan status tamu berulang. Tiga algoritma dibandingkan: **Logistic Regression**, "
              "**Random Forest**, dan **XGBoost**. Model dilatih pada data latih, di-tuning dengan cross-validation, "
              "lalu diuji sekali pada data uji.")
     st.caption(
@@ -76,6 +77,8 @@ with c2:
         "- Hasil tidak boleh jadi satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda.\n"
         "- Negara asal tamu dipakai karena berkorelasi dengan pola pembatalan di data, bukan karena negara menyebabkan pembatalan; jangan dipakai untuk membedakan perlakuan tamu.\n"
         "- Data dibagi acak, bukan berdasarkan waktu, sehingga performa pada periode yang lebih baru belum teruji.\n"
+        "- Tarif per malam memakai satuan euro dan tingkat harga hotel di Portugal 2015-2017; nilainya tidak bisa langsung dibandingkan dengan harga hotel di Indonesia.\n"
+        "- Riwayat pembatalan dan status tamu berulang hanya pola statistik; jangan dipakai untuk menolak atau membedakan perlakuan tamu.\n"
         "- Prototipe edukasi, bukan sistem operasional hotel.")
 
 st.markdown("## Karakteristik Statistik Data")

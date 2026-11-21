@@ -18,6 +18,10 @@ FIGURES = REPORTS / "figures"
 # Rentang input yang diizinkan (sesuai data latih)
 LEAD_MIN, LEAD_MAX = 0, 740
 REQ_MIN, REQ_MAX = 0, 5
+# v1.2: batas input baru = batas domain (clip) yang dipakai pipeline saat training (notebook 03)
+NIGHTS_MIN, NIGHTS_MAX = 1, 30
+ADR_MIN, ADR_MAX = 0, 500          # tarif rata-rata per malam, EUR (satuan dataset)
+PREV_MIN, PREV_MAX = 0, 10
 
 COUNTRY_NAMES = {
     "PRT": "Portugal", "GBR": "Inggris", "FRA": "Prancis", "ESP": "Spanyol", "DEU": "Jerman",
@@ -34,6 +38,11 @@ SEGMENT_LABELS = {
     "Complementary": "Gratis / komplimen",
     "Aviation": "Maskapai penerbangan",
 }
+HOTEL_LABELS = {
+    "City Hotel": "City Hotel (perkotaan, Lisbon)",
+    "Resort Hotel": "Resort Hotel (resor, Algarve)",
+}
+REPEAT_LABELS = {0: "Tamu baru", 1: "Pernah menginap sebelumnya"}
 CUSTOMER_LABELS = {
     "Transient": "Individu / perorangan (Transient)",
     "Transient-Party": "Rombongan kecil perorangan (Transient-Party)",
@@ -111,6 +120,21 @@ def validate_inputs(d, countries):
         errors.append("Asal pemesanan belum dipilih dengan benar.")
     if d.get("customer_type") not in CUSTOMER_LABELS:
         errors.append("Tipe pelanggan belum dipilih dengan benar.")
+    if d.get("hotel") not in HOTEL_LABELS:
+        errors.append("Jenis hotel belum dipilih dengan benar.")
+    nt, pc, rp = _int_or_none(d.get("nights")), _int_or_none(d.get("previous_cancellations")), _int_or_none(d.get("is_repeated_guest"))
+    if nt is None or not (NIGHTS_MIN <= nt <= NIGHTS_MAX):
+        errors.append(f"Lama menginap harus berupa angka {NIGHTS_MIN}-{NIGHTS_MAX} malam.")
+    if pc is None or not (PREV_MIN <= pc <= PREV_MAX):
+        errors.append(f"Jumlah pembatalan sebelumnya harus {PREV_MIN}-{PREV_MAX}.")
+    if rp not in (0, 1):
+        errors.append("Status tamu berulang harus dipilih (tamu baru / pernah menginap).")
+    try:
+        adr = float(d.get("adr"))
+        if math.isnan(adr) or not (ADR_MIN <= adr <= ADR_MAX):
+            raise ValueError
+    except (TypeError, ValueError):
+        errors.append(f"Tarif per malam harus berupa angka {ADR_MIN}-{ADR_MAX} (EUR).")
     return errors
 
 
@@ -128,6 +152,11 @@ FEATURE_TITLES = {
     "market_segment": "Asal pemesanan",
     "total_of_special_requests": "Permintaan khusus",
     "customer_type": "Tipe pelanggan",
+    "hotel": "Jenis hotel",
+    "nights": "Lama menginap",
+    "adr": "Tarif per malam",
+    "previous_cancellations": "Riwayat pembatalan",
+    "is_repeated_guest": "Status tamu",
 }
 
 
@@ -143,6 +172,16 @@ def format_input_value(feature, value):
         return f"{int(value)} permintaan khusus"
     if feature == "customer_type":
         return CUSTOMER_LABELS.get(value, str(value))
+    if feature == "hotel":
+        return HOTEL_LABELS.get(value, str(value))
+    if feature == "nights":
+        return f"{int(value)} malam"
+    if feature == "adr":
+        return f"€{float(value):,.0f} per malam"
+    if feature == "previous_cancellations":
+        return "Belum pernah batal" if int(value) == 0 else f"{int(value)} kali batal sebelumnya"
+    if feature == "is_repeated_guest":
+        return REPEAT_LABELS.get(int(value), str(value))
     return str(value)
 
 
@@ -155,6 +194,11 @@ def explain_local_drivers(artifact, inputs, baseline=None):
             "market_segment": "Online TA",
             "total_of_special_requests": 0,
             "customer_type": "Transient",
+            "hotel": "City Hotel",
+            "nights": 3,
+            "adr": 100,
+            "previous_cancellations": 0,
+            "is_repeated_guest": 0,
         }
     )
     feats = list(artifact["features"])
@@ -343,25 +387,46 @@ def what_if_scenarios(artifact, inputs):
         "Peluang Baru (%)": round(p_cust * 100.0, 1),
         "Perubahan (poin %)": round(p_cust * 100.0 - curr_pct, 1),
     })
+
+    hotel = inputs.get("hotel", "City Hotel")
+    target_hotel = "Resort Hotel" if hotel == "City Hotel" else "City Hotel"
+    p_h, _ = predict(artifact, dict(inputs, hotel=target_hotel))
+    scenarios.append({
+        "Skenario": f"Jenis hotel diubah ({hotel} → {target_hotel})",
+        "Peluang Baru (%)": round(p_h * 100.0, 1),
+        "Perubahan (poin %)": round(p_h * 100.0 - curr_pct, 1),
+    })
+
+    nights = int(inputs.get("nights", 3))
+    target_n = 7 if nights < 7 else 2
+    p_n, _ = predict(artifact, dict(inputs, nights=target_n))
+    scenarios.append({
+        "Skenario": f"Lama menginap diubah ({nights} → {target_n} malam)",
+        "Peluang Baru (%)": round(p_n * 100.0, 1),
+        "Perubahan (poin %)": round(p_n * 100.0 - curr_pct, 1),
+    })
     return scenarios
 
 
 def sample_batch_dataframe():
-    """Contoh dataset CSV (8 baris) untuk simulasi prediksi batch."""
-    return pd.DataFrame([
-        {"lead_time": 210, "country": "PRT", "market_segment": "Online TA", "total_of_special_requests": 0, "customer_type": "Transient"},
-        {"lead_time": 12, "country": "GBR", "market_segment": "Direct", "total_of_special_requests": 2, "customer_type": "Transient-Party"},
-        {"lead_time": 95, "country": "FRA", "market_segment": "Online TA", "total_of_special_requests": 1, "customer_type": "Transient"},
-        {"lead_time": 4, "country": "DEU", "market_segment": "Corporate", "total_of_special_requests": 1, "customer_type": "Contract"},
-        {"lead_time": 165, "country": "ESP", "market_segment": "Groups", "total_of_special_requests": 0, "customer_type": "Group"},
-        {"lead_time": 38, "country": "ITA", "market_segment": "Online TA", "total_of_special_requests": 3, "customer_type": "Transient"},
-        {"lead_time": 280, "country": "PRT", "market_segment": "Offline TA/TO", "total_of_special_requests": 0, "customer_type": "Transient"},
-        {"lead_time": 19, "country": "NLD", "market_segment": "Direct", "total_of_special_requests": 2, "customer_type": "Transient"},
-    ])
+    """Contoh dataset CSV (8 baris) untuk simulasi prediksi batch (10 kolom fitur)."""
+    cols = ["lead_time", "country", "market_segment", "total_of_special_requests", "customer_type",
+            "hotel", "nights", "adr", "previous_cancellations", "is_repeated_guest"]
+    rows = [
+        (210, "PRT", "Online TA", 0, "Transient", "City Hotel", 4, 105, 0, 0),
+        (12, "GBR", "Direct", 2, "Transient-Party", "Resort Hotel", 7, 140, 0, 1),
+        (95, "FRA", "Online TA", 1, "Transient", "City Hotel", 3, 90, 1, 0),
+        (4, "DEU", "Corporate", 1, "Contract", "City Hotel", 2, 75, 0, 0),
+        (165, "ESP", "Groups", 0, "Group", "Resort Hotel", 5, 60, 0, 0),
+        (38, "ITA", "Online TA", 3, "Transient", "Resort Hotel", 6, 160, 0, 0),
+        (280, "PRT", "Offline TA/TO", 0, "Transient", "City Hotel", 2, 85, 2, 0),
+        (19, "NLD", "Direct", 2, "Transient", "Resort Hotel", 3, 120, 0, 1),
+    ]
+    return pd.DataFrame(rows, columns=cols)
 
 
 def predict_batch(artifact, df, countries):
-    """Menjalankan prediksi batch pada DataFrame yang memiliki 5 kolom fitur."""
+    """Menjalankan prediksi batch pada DataFrame yang memiliki 10 kolom fitur."""
     req_cols = list(artifact["features"])
     missing = [c for c in req_cols if c not in df.columns]
     if missing:
@@ -378,6 +443,13 @@ def predict_batch(artifact, df, countries):
     work["market_segment"] = work["market_segment"].apply(lambda s: s if s in SEGMENT_LABELS else "Online TA")
     work["customer_type"] = work["customer_type"].astype(str).str.strip()
     work["customer_type"] = work["customer_type"].apply(lambda c: c if c in CUSTOMER_LABELS else "Transient")
+    work["hotel"] = work["hotel"].astype(str).str.strip().apply(lambda h: h if h in HOTEL_LABELS else "City Hotel")
+    work["nights"] = pd.to_numeric(work["nights"], errors="coerce").fillna(3).clip(NIGHTS_MIN, NIGHTS_MAX).astype(int)
+    work["adr"] = pd.to_numeric(work["adr"], errors="coerce").fillna(100).clip(ADR_MIN, ADR_MAX).astype(float)
+    work["previous_cancellations"] = (
+        pd.to_numeric(work["previous_cancellations"], errors="coerce").fillna(0).clip(PREV_MIN, PREV_MAX).astype(int)
+    )
+    work["is_repeated_guest"] = (pd.to_numeric(work["is_repeated_guest"], errors="coerce").fillna(0) > 0).astype(int)
 
     probas = artifact["pipeline"].predict_proba(work[req_cols])[:, 1]
     thr = float(artifact["threshold"])

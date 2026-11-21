@@ -13,7 +13,8 @@ from utils import (require_artifact, known_countries, validate_inputs, predict, 
                    explain_local_drivers, threshold_zone, format_input_value, historical_benchmarks,
                    operational_recommendations, what_if_scenarios, sample_batch_dataframe, predict_batch,
                    FIGURES, COUNTRY_NAMES, OTHER_COUNTRY, SEGMENT_LABELS, CUSTOMER_LABELS,
-                   LEAD_MIN, LEAD_MAX, REQ_MIN, REQ_MAX)
+                   LEAD_MIN, LEAD_MAX, REQ_MIN, REQ_MAX, HOTEL_LABELS, REPEAT_LABELS,
+                   NIGHTS_MIN, NIGHTS_MAX, ADR_MIN, ADR_MAX, PREV_MIN, PREV_MAX)
 
 st.set_page_config(page_title=f"{BRAND} - Prediksi pembatalan booking hotel", page_icon=FAVICON, layout="wide")
 inject_css()
@@ -26,23 +27,29 @@ thr = artifact["threshold"]
 
 DEFAULTS = {"in_lead": 60, "in_country": "PRT" if "PRT" in countries else countries[0],
             "in_segment": "Online TA", "in_requests": 0, "in_customer": "Transient",
-            "in_adr": 750_000, "in_nights": 2}
+            "in_hotel": "City Hotel", "in_nights": 3, "in_adr": 100, "in_prev": 0, "in_repeat": 0}
 for k, v in DEFAULTS.items():
     st.session_state.setdefault(k, v)
 
 PRESETS = {
-    "Pesan online jauh hari": {"in_lead": 220, "in_country": "PRT", "in_segment": "Online TA",
-                               "in_requests": 0, "in_customer": "Transient"},
-    "Tamu perusahaan, mepet": {"in_lead": 3, "in_country": "GBR", "in_segment": "Corporate",
-                               "in_requests": 2, "in_customer": "Contract"},
-    "Liburan keluarga": {"in_lead": 45, "in_country": "DEU", "in_segment": "Direct",
-                         "in_requests": 3, "in_customer": "Transient-Party"},
-    "Rombongan tur": {"in_lead": 150, "in_country": "ESP", "in_segment": "Groups",
-                      "in_requests": 0, "in_customer": "Group"},
-    "Backpacker dadakan": {"in_lead": 1, "in_country": "FRA", "in_segment": "Online TA",
-                           "in_requests": 1, "in_customer": "Transient"},
-    "Tamu luar Eropa": {"in_lead": 120, "in_country": OTHER_COUNTRY, "in_segment": "Offline TA/TO",
-                        "in_requests": 2, "in_customer": "Transient"},
+    "Pesan online jauh hari": {"in_lead": 220, "in_country": "PRT", "in_segment": "Online TA", "in_requests": 0,
+                               "in_customer": "Transient", "in_hotel": "City Hotel", "in_nights": 3, "in_adr": 95,
+                               "in_prev": 0, "in_repeat": 0},
+    "Tamu perusahaan, mepet": {"in_lead": 3, "in_country": "GBR", "in_segment": "Corporate", "in_requests": 2,
+                               "in_customer": "Contract", "in_hotel": "City Hotel", "in_nights": 2, "in_adr": 110,
+                               "in_prev": 0, "in_repeat": 1},
+    "Liburan keluarga": {"in_lead": 45, "in_country": "DEU", "in_segment": "Direct", "in_requests": 3,
+                         "in_customer": "Transient-Party", "in_hotel": "Resort Hotel", "in_nights": 7, "in_adr": 150,
+                         "in_prev": 0, "in_repeat": 1},
+    "Rombongan tur": {"in_lead": 150, "in_country": "ESP", "in_segment": "Groups", "in_requests": 0,
+                      "in_customer": "Group", "in_hotel": "Resort Hotel", "in_nights": 5, "in_adr": 70,
+                      "in_prev": 0, "in_repeat": 0},
+    "Backpacker dadakan": {"in_lead": 1, "in_country": "FRA", "in_segment": "Online TA", "in_requests": 1,
+                           "in_customer": "Transient", "in_hotel": "City Hotel", "in_nights": 1, "in_adr": 60,
+                           "in_prev": 0, "in_repeat": 0},
+    "Pernah batal sebelumnya": {"in_lead": 120, "in_country": OTHER_COUNTRY, "in_segment": "Offline TA/TO", "in_requests": 0,
+                                "in_customer": "Transient", "in_hotel": "City Hotel", "in_nights": 4, "in_adr": 100,
+                                "in_prev": 2, "in_repeat": 0},
 }
 
 
@@ -143,7 +150,7 @@ html(f"""
 <div>
 <div class="hero-kicker">Model {artifact['model_name']} · Proyek Akhir Pembelajaran Mesin 2026</div>
 <h1>Prediksi Risiko Pembatalan Booking Hotel dalam Hitungan Detik</h1>
-<p class="lead">Bantu tim reservasi dan operasional hotel mendeteksi booking rawan batal sejak dini dari 5 informasi reservasi — dilatih pada 87.151 histori reservasi City &amp; Resort Hotel.</p>
+<p class="lead">Bantu tim reservasi dan operasional hotel mendeteksi booking rawan batal sejak dini dari 10 informasi reservasi — dilatih pada 87.151 histori reservasi City &amp; Resort Hotel.</p>
 <div class="hero-cta"><a class="cta" href="#coba" role="button">Prediksi Booking Sekarang</a><a class="ghost" href="#wawasan" role="button">Lihat Data Historis</a></div>
 <div class="hero-stats">
 <div class="h-stat"><b>87.151</b><span>reservasi unik dipelajari</span></div>
@@ -177,10 +184,10 @@ html("""
 <h3>Dari data booking ke skor risiko dalam hitungan detik</h3>
 <p>Tidak perlu paham machine learning. Cukup isi profil reservasi, model yang sudah dilatih akan membandingkannya dengan pola historis.</p>
 </div>
-<div class="hs-chips"><span>Jarak pemesanan</span><span>Negara</span><span>Kanal pesan</span><span>Permintaan khusus</span><span>Tipe tamu</span></div>
+<div class="hs-chips"><span>Jarak pemesanan</span><span>Negara</span><span>Kanal pesan</span><span>Permintaan khusus</span><span>Tipe tamu</span><span>Jenis hotel</span><span>Lama menginap</span><span>Tarif per malam</span><span>Riwayat batal</span><span>Tamu berulang</span></div>
 </div>
 <div class="how-list">
-<div class="how-row"><div class="how-num">01</div><div class="how-body"><h4>Masukkan profil reservasi</h4><p>Atur lima isian di form, atau klik salah satu skenario cepat.</p></div><span class="how-pill">± 30 detik</span></div>
+<div class="how-row"><div class="how-num">01</div><div class="how-body"><h4>Masukkan profil reservasi</h4><p>Atur sepuluh isian di form, atau klik salah satu skenario cepat.</p></div><span class="how-pill">± 30 detik</span></div>
 <div class="how-row"><div class="how-num">02</div><div class="how-body"><h4>Model menghitung peluang batal</h4><p>Pipeline memproses input dan membandingkannya dengan 87 ribu histori reservasi.</p></div><span class="how-pill">Instan</span></div>
 <div class="how-row"><div class="how-num">03</div><div class="how-body"><h4>Baca hasil &amp; faktor pendorong</h4><p>Lihat persentase, posisi terhadap batas, grafik pembanding, dan 3 faktor utama.</p></div><span class="how-pill">Estimasi</span></div>
 </div>
@@ -198,19 +205,30 @@ with st.container(key="preset_bar"):
 left, right = st.columns([1.25, 1], gap="large")
 with left:
     with st.container(key="form_box"):
-        html('<div class="form-banner"><b>Form prediksi pembatalan</b><span>5 input</span></div>')
+        html('<div class="form-banner"><b>Form prediksi pembatalan</b><span>10 input</span></div>')
         st.markdown("##### Soal booking-nya")
-        a, b = st.columns(2, gap="medium")
-        with a:
+        a1, a2 = st.columns(2, gap="medium")
+        with a1:
             lead_time = st.slider("Dipesan berapa hari sebelum menginap?", LEAD_MIN, 365, key="in_lead",
                                   on_change=clear_result,
                                   help=f"Rentang umum 0-365 hari (maksimum data latih: {LEAD_MAX} hari).")
             st.caption(lead_human(lead_time))
-        with b:
+        with a2:
             segment = st.selectbox("Dipesan lewat mana?", list(SEGMENT_LABELS), format_func=SEGMENT_LABELS.get,
                                    key="in_segment", on_change=clear_result)
-        requests = st.slider("Berapa permintaan khusus dari tamu?", REQ_MIN, REQ_MAX, key="in_requests",
-                             on_change=clear_result, help="Contoh: tambahan bed, lantai tinggi, kamar bebas rokok.")
+        a3, a4 = st.columns(2, gap="medium")
+        with a3:
+            hotel = st.selectbox("Jenis hotel", list(HOTEL_LABELS), format_func=HOTEL_LABELS.get,
+                                 key="in_hotel", on_change=clear_result)
+        with a4:
+            nights = st.slider("Berapa malam menginap?", NIGHTS_MIN, NIGHTS_MAX, key="in_nights", on_change=clear_result)
+        a5, a6 = st.columns(2, gap="medium")
+        with a5:
+            adr = st.slider("Tarif rata-rata per malam (€)", ADR_MIN, ADR_MAX, step=5, key="in_adr", on_change=clear_result,
+                            help="Satuan euro, sesuai data hotel di Portugal. Median data latih sekitar €98.")
+        with a6:
+            requests = st.slider("Berapa permintaan khusus dari tamu?", REQ_MIN, REQ_MAX, key="in_requests",
+                                 on_change=clear_result, help="Contoh: tambahan bed, lantai tinggi, kamar bebas rokok.")
         st.markdown("##### Soal tamunya")
         c, d = st.columns(2, gap="medium")
         with c:
@@ -220,13 +238,26 @@ with left:
         with d:
             customer = st.selectbox("Tipe pelanggan", list(CUSTOMER_LABELS), format_func=CUSTOMER_LABELS.get,
                                     key="in_customer", on_change=clear_result)
+        e1, e2 = st.columns(2, gap="medium")
+        with e1:
+            repeat = st.selectbox("Status tamu", [0, 1], format_func=REPEAT_LABELS.get, key="in_repeat", on_change=clear_result)
+        with e2:
+            prev = st.slider("Berapa kali tamu pernah membatalkan sebelumnya?", PREV_MIN, PREV_MAX, key="in_prev",
+                             on_change=clear_result, help="Riwayat dari reservasi-reservasi tamu yang sama sebelum booking ini.")
         b1, b2 = st.columns([2, 1])
         go = b1.button("Prediksi pembatalan", type="primary", width="stretch")
         b2.button("Atur ulang", on_click=reset_form, width="stretch")
 
+def collect_inputs():
+    """Mengumpulkan 10 input dari form (urutan kunci = fitur model)."""
+    return {"lead_time": int(lead_time), "country": country, "market_segment": segment,
+            "total_of_special_requests": int(requests), "customer_type": customer,
+            "hotel": hotel, "nights": int(nights), "adr": float(adr),
+            "previous_cancellations": int(prev), "is_repeated_guest": int(repeat)}
+
+
 if go:  # FR-02, FR-03
-    inputs = {"lead_time": int(lead_time), "country": country, "market_segment": segment,
-              "total_of_special_requests": int(requests), "customer_type": customer}
+    inputs = collect_inputs()
     errors = validate_inputs(inputs, countries)
     if errors:
         with left:
@@ -245,6 +276,11 @@ if go:  # FR-02, FR-03
             "Asal pemesanan": SEGMENT_LABELS.get(segment, segment),
             "Permintaan khusus": int(requests),
             "Tipe pelanggan": CUSTOMER_LABELS.get(customer, customer),
+            "Hotel": hotel,
+            "Malam": int(nights),
+            "Tarif (€)": float(adr),
+            "Pembatalan sebelumnya": int(prev),
+            "Tamu berulang": "Ya" if repeat else "Tidak",
             "Peluang batal (%)": round(proba * 100, 1),
             "Status": "Berpotensi batal" if label else "Tidak berpotensi batal",
         })
@@ -264,10 +300,7 @@ with right:  # FR-04, FR-05, FR-06
         verdict = "berpotensi dibatalkan" if lab else "tidak berpotensi dibatalkan"
         z_code, z_text = threshold_zone(p, thr)
         z_cls = "near" if z_code == "near" else ""
-        drivers = res.get("drivers") or explain_local_drivers(artifact, res.get("inputs", {
-            "lead_time": int(lead_time), "country": country, "market_segment": segment,
-            "total_of_special_requests": int(requests), "customer_type": customer,
-        }))
+        drivers = res.get("drivers") or explain_local_drivers(artifact, res["inputs"])
         driver_items = []
         for d_row in drivers[:3]:
             dp = d_row["delta_pp"]
@@ -284,10 +317,7 @@ with right:  # FR-04, FR-05, FR-06
             f'<div class="r-drivers"><h4>Mengapa hasilnya seperti ini?</h4>'
             f'<ul>{"".join(driver_items)}</ul></div>'
         )
-        curr_inputs = res.get("inputs", {
-            "lead_time": int(lead_time), "country": country, "market_segment": segment,
-            "total_of_special_requests": int(requests), "customer_type": customer,
-        })
+        curr_inputs = res["inputs"]
         stamp_info, actions = operational_recommendations(p, thr, curr_inputs)
         stamp_text, stamp_cls = stamp_info
         actions_html = "".join(f"<li>{escape(act)}</li>" for act in actions)
@@ -322,20 +352,20 @@ if res_active:
         "Simulator Sensitivitas 'Bagaimana Jika...'",
     ])
     with sim_t1:
+        adr_v, nights_v = float(inp_act["adr"]), int(inp_act["nights"])
+        gross_val = adr_v * nights_v
+        exp_loss = gross_val * p_act
+        rec_deposit = gross_val * (0.5 if p_act >= thr else 0.25)
+        fmt_eur = lambda n: f"€{n:,.0f}"
         fc_in, fc_out = st.columns([1, 2.25], gap="medium")
         with fc_in:
-            adr_rp = st.number_input("Tarif kamar / malam (Rp)", min_value=100_000, max_value=25_000_000, step=50_000, key="in_adr")
-            nights = st.number_input("Durasi menginap (malam)", min_value=1, max_value=30, step=1, key="in_nights")
-        gross_val = int(adr_rp) * int(nights)
-        exp_loss = int(round(gross_val * p_act))
-        rec_deposit = int(round(gross_val * (0.5 if p_act >= thr else 0.25)))
-        fmt_rp = lambda n: f"Rp {n:,.0f}".replace(",", ".")
+            st.caption("Tarif per malam dan lama menginap diambil dari form di atas (satuan euro, sesuai data hotel). Ubah di form lalu prediksi ulang.")
         with fc_out:
             html(f"""
             <div class="fin-grid" style="margin-top:.15rem">
-            <div class="fin-card"><small>Total Nilai Reservasi</small><b>{fmt_rp(gross_val)}</b><span>{int(nights)} malam × {fmt_rp(int(adr_rp))}</span></div>
-            <div class="fin-card"><small>Ekspektasi Risiko</small><b>{fmt_rp(exp_loss)}</b><span>Nilai × {p_act*100:.1f}% peluang batal</span></div>
-            <div class="fin-card"><small>Saran Deposit</small><b>{fmt_rp(rec_deposit)}</b><span>{"50% (risiko di atas batas)" if p_act >= thr else "25% (komitmen standar)"}</span></div>
+            <div class="fin-card"><small>Total Nilai Reservasi</small><b>{fmt_eur(gross_val)}</b><span>{nights_v} malam × {fmt_eur(adr_v)}</span></div>
+            <div class="fin-card"><small>Ekspektasi Risiko</small><b>{fmt_eur(exp_loss)}</b><span>Nilai × {p_act*100:.1f}% peluang batal</span></div>
+            <div class="fin-card"><small>Saran Deposit</small><b>{fmt_eur(rec_deposit)}</b><span>{"50% (risiko di atas batas)" if p_act >= thr else "25% (komitmen standar)"}</span></div>
             </div>
             """)
             st.caption("Ekspektasi risiko finansial menunjukkan potensi pendapatan kamar yang berisiko hilang bila booking batal tanpa pengganti.")
@@ -363,7 +393,7 @@ with st.expander("Prediksi banyak reservasi sekaligus (Simulasi daftar / Upload 
     b_top1, b_top2 = st.columns([1.45, 1], gap="medium")
     sample_df = sample_batch_dataframe()
     with b_top1:
-        st.caption("Unggah CSV dengan 5 kolom (`lead_time`, `country`, `market_segment`, `total_of_special_requests`, `customer_type`) atau uji langsung dengan sampel:")
+        st.caption("Unggah CSV dengan 10 kolom (`lead_time`, `country`, `market_segment`, `total_of_special_requests`, `customer_type`, `hotel`, `nights`, `adr`, `previous_cancellations`, `is_repeated_guest`) atau uji langsung dengan sampel:")
         btn_c1, btn_c2 = st.columns(2, gap="small")
         btn_c1.download_button(
             "Unduh template CSV",
@@ -418,11 +448,12 @@ if hist_rows:
 # ------------------------------------------------------------------ wawasan visual EDA
 html('<div id="wawasan"></div><h2>Wawasan visual dari data historis</h2>')
 st.write("Grafik eksplorasi dari 87.151 reservasi unik yang menjelaskan pola pembatalan sebelum model dilatih.")
-eda_t1, eda_t2, eda_t3, eda_t4 = st.tabs([
+eda_t1, eda_t2, eda_t3, eda_t4, eda_t5 = st.tabs([
     "Jarak Pesan, Bulan & Negara",
     "Segmen & Tipe Tamu",
     "Permintaan Khusus",
     "Proporsi Target",
+    "Fitur Tambahan",
 ])
 with eda_t1:
     p_lt = FIGURES / "leadtime_month_country.png"
@@ -445,6 +476,12 @@ with eda_t4:
         st.image(str(p_tgt), width="stretch")
     st.caption("Distribusi kelas setelah pembersihan duplikat: sekitar 27,3% reservasi dibatalkan dan 72,7% tidak dibatalkan.")
 
+with eda_t5:
+    p_new = FIGURES / "new_features_cancel_rate.png"
+    if p_new.exists():
+        st.image(str(p_new), width="stretch")
+    st.caption("Rasio batal menurut lama menginap, tarif per malam, riwayat pembatalan sebelumnya, dan status tamu berulang (lima input tambahan dibahas di notebook 02 bagian 6b).")
+
 # ------------------------------------------------------------------ keandalan
 rec, prec = metrics.get("Recall"), metrics.get("Precision")
 if rec and prec:
@@ -463,4 +500,4 @@ if rec and prec:
 
 # ------------------------------------------------------------------ tim
 html("<h2>Tim di balik proyek</h2>" + team_html())
-html('<p class="fine" style="margin-top:2.4rem">Prototipe edukasi untuk proyek akhir Pembelajaran Mesin. Hasil prediksi bukan kepastian dan tidak boleh dipakai sebagai satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda. Negara asal tamu dipakai hanya karena berkorelasi dengan pola pembatalan di data historis, bukan sebagai dasar membedakan tamu.</p>')
+html('<p class="fine" style="margin-top:2.4rem">Prototipe edukasi untuk proyek akhir Pembelajaran Mesin. Hasil prediksi bukan kepastian dan tidak boleh dipakai sebagai satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda, termasuk berdasarkan riwayat pembatalan atau status tamu berulang. Negara asal tamu dipakai hanya karena berkorelasi dengan pola pembatalan di data historis, bukan sebagai dasar membedakan tamu.</p>')

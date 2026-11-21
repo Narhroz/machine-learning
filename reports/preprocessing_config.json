@@ -1,23 +1,47 @@
 {
   "features": [
     "lead_time",
-    "total_of_special_requests",
     "country",
     "market_segment",
-    "customer_type"
+    "total_of_special_requests",
+    "customer_type",
+    "hotel",
+    "nights",
+    "adr",
+    "previous_cancellations",
+    "is_repeated_guest"
   ],
   "num_feats": [
     "lead_time",
-    "total_of_special_requests"
+    "total_of_special_requests",
+    "nights",
+    "adr",
+    "previous_cancellations",
+    "is_repeated_guest"
   ],
   "cat_feats": [
     "country",
     "market_segment",
-    "customer_type"
+    "customer_type",
+    "hotel"
   ],
   "target": "is_canceled",
   "random_state": 42,
   "test_size": 0.2,
+  "clip_bounds": {
+    "adr": [
+      0,
+      500
+    ],
+    "nights": [
+      0,
+      30
+    ],
+    "previous_cancellations": [
+      0,
+      10
+    ]
+  },
   "n_train": 69720,
   "n_test": 17431,
   "market_segment_values": [
@@ -35,6 +59,10 @@
     "Group",
     "Transient",
     "Transient-Party"
+  ],
+  "hotel_values": [
+    "City Hotel",
+    "Resort Hotel"
   ],
   "top_countries": [
     "PRT",
