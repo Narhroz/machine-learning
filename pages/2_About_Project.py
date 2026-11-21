@@ -44,42 +44,48 @@ html("""
 </div>
 """)
 
-c1, c2 = st.columns(2, gap="large")
-with c1:
-    st.markdown("## Masalahnya")
-    st.write("Pembatalan reservasi memengaruhi perencanaan kamar, pendapatan, dan operasional hotel. "
-             "Proyek ini membangun model klasifikasi untuk memperkirakan apakah suatu reservasi berpotensi "
-             "dibatalkan, sebagai proyek akhir mata kuliah Pembelajaran Mesin.")
-    st.markdown("## Datanya")
-    st.write("**Hotel Booking Demand**: catatan reservasi City Hotel dan Resort Hotel periode 2015-2017, "
-             "sekitar 119 ribu baris. Setelah baris duplikat dibuang tersisa sekitar 87 ribu baris.")
-    st.markdown("- Kaggle: https://www.kaggle.com/datasets/jessemostipak/hotel-booking-demand\n"
-                "- Publikasi: Antonio, de Almeida & Nunes (2019), *Data in Brief* 22, 41-49. "
-                "https://doi.org/10.1016/j.dib.2018.11.126")
-with c2:
-    st.markdown("## Yang kami bangun")
-    st.write("Model memakai sepuluh input: jarak pemesanan ke kedatangan, negara asal tamu, asal pemesanan, "
-             "jumlah permintaan khusus, tipe pelanggan, jenis hotel, lama menginap, tarif rata-rata per malam, "
-             "jumlah pembatalan sebelumnya, dan status tamu berulang. Tiga algoritma dibandingkan: **Logistic Regression**, "
-             "**Random Forest**, dan **XGBoost**. Model dilatih pada data latih, di-tuning dengan cross-validation, "
-             "lalu diuji sekali pada data uji.")
-    st.caption(
-        "Catatan pra-pemrosesan: negara di luar 10 negara terbanyak digabung ke kategori `OTHER` oleh pipeline; "
-        "baris `market_segment = Undefined` (2 baris pada data mentah) tidak disediakan sebagai pilihan input "
-        "dan ditangani otomatis oleh encoder dengan `handle_unknown='ignore'`."
-    )
-    st.markdown("## Keterbatasan")
-    st.markdown(
-        "- Data historis 2015-2017 dari konteks hotel tertentu; pola belum tentu berlaku di hotel, negara, atau periode lain.\n"
-        "- Model mempelajari pola statistik, **bukan alasan pasti** seseorang membatalkan booking.\n"
-        "- Booking yang dibuat mepet dengan tanggal menginap sulit dideteksi.\n"
-        "- Persentase adalah estimasi; sebagian booking yang tidak batal ikut ditandai.\n"
-        "- Hasil tidak boleh jadi satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda.\n"
-        "- Negara asal tamu dipakai karena berkorelasi dengan pola pembatalan di data, bukan karena negara menyebabkan pembatalan; jangan dipakai untuk membedakan perlakuan tamu.\n"
-        "- Data dibagi acak, bukan berdasarkan waktu, sehingga performa pada periode yang lebih baru belum teruji.\n"
-        "- Tarif per malam memakai satuan euro dan tingkat harga hotel di Portugal 2015-2017; nilainya tidak bisa langsung dibandingkan dengan harga hotel di Indonesia.\n"
-        "- Riwayat pembatalan dan status tamu berulang hanya pola statistik; jangan dipakai untuk menolak atau membedakan perlakuan tamu.\n"
-        "- Prototipe edukasi, bukan sistem operasional hotel.")
+html("""
+<div class="about-grid">
+<div class="about-card">
+<span class="a-tag">Masalah</span>
+<h3>Masalahnya</h3>
+<p>Pembatalan reservasi memengaruhi perencanaan kamar, pendapatan, dan operasional hotel. Proyek ini membangun model klasifikasi untuk memperkirakan apakah suatu reservasi berpotensi dibatalkan, sebagai proyek akhir mata kuliah Pembelajaran Mesin.</p>
+</div>
+<div class="about-card">
+<span class="a-tag">Data</span>
+<h3>Datanya</h3>
+<p><b>Hotel Booking Demand</b>: reservasi City Hotel dan Resort Hotel periode 2015-2017.</p>
+<div class="a-chips"><span>±119 ribu baris mentah</span><span>±87 ribu setelah duplikat dibuang</span><span>2015-2017</span></div>
+<ul>
+<li><a href="https://www.kaggle.com/datasets/jessemostipak/hotel-booking-demand" target="_blank">Kaggle: Hotel Booking Demand</a></li>
+<li>Antonio, de Almeida &amp; Nunes (2019), <i>Data in Brief</i> 22, 41-49. <a href="https://doi.org/10.1016/j.dib.2018.11.126" target="_blank">doi.org/10.1016/j.dib.2018.11.126</a></li>
+</ul>
+</div>
+<div class="about-card">
+<span class="a-tag">Model</span>
+<h3>Yang kami bangun</h3>
+<p>Model memakai <b>10 input</b>, dibandingkan pada tiga algoritma, dilatih di data latih, di-tuning dengan cross-validation, lalu diuji sekali pada data uji.</p>
+<div class="a-chips"><span>Jarak pemesanan</span><span>Negara tamu</span><span>Asal pemesanan</span><span>Permintaan khusus</span><span>Tipe pelanggan</span><span>Jenis hotel</span><span>Lama menginap</span><span>Tarif per malam</span><span>Pembatalan sebelumnya</span><span>Status tamu berulang</span></div>
+<div class="a-chips algo"><span>Logistic Regression</span><span>Random Forest</span><span>XGBoost</span></div>
+<p class="a-note">Negara di luar 10 negara terbanyak digabung ke kategori <code>OTHER</code> oleh pipeline. Baris <code>market_segment = Undefined</code> (2 baris) tidak disediakan sebagai pilihan input dan ditangani encoder dengan <code>handle_unknown='ignore'</code>.</p>
+</div>
+<div class="about-card warn">
+<span class="a-tag">Perhatian</span>
+<h3>Keterbatasan</h3>
+<ul>
+<li>Data historis 2015-2017 dari hotel tertentu; belum tentu berlaku di hotel, negara, atau periode lain.</li>
+<li>Model mempelajari pola statistik, <b>bukan alasan pasti</b> seseorang membatalkan booking.</li>
+<li>Booking yang dibuat mepet dengan tanggal menginap sulit dideteksi.</li>
+<li>Persentase adalah estimasi; sebagian booking yang tidak batal ikut ditandai.</li>
+<li>Hasil tidak boleh jadi satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda.</li>
+<li>Negara asal, riwayat pembatalan, dan status tamu berulang hanya pola statistik; jangan dipakai membedakan perlakuan tamu.</li>
+<li>Tarif per malam dalam euro, tingkat harga Portugal 2015-2017; tidak setara harga hotel di Indonesia.</li>
+<li>Data dibagi acak, bukan berdasarkan waktu, sehingga performa pada periode lebih baru belum teruji.</li>
+<li>Prototipe edukasi, bukan sistem operasional hotel.</li>
+</ul>
+</div>
+</div>
+""")
 
 st.markdown("## Karakteristik Statistik Data")
 da1, da2 = st.tabs(["Distribusi Fitur Numerik", "Korelasi Antar Fitur"])
