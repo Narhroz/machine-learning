@@ -77,10 +77,11 @@ def sync_all():
 
 
 def num_field(label, k, lo, smax, hmax, help=None):
-    """Slider + kotak ketik manual. Nilai yang dipakai model = nilai kotak ketik."""
-    st.slider(label, lo, smax, key=k, on_change=_from_slider, args=(k,), help=help)
-    return st.number_input(label, min_value=lo, max_value=hmax, step=1, key=k + "_n",
-                           on_change=_from_number, args=(k, smax), label_visibility="collapsed")
+    """Slider (kiri) + kotak ketik manual (kanan) dalam satu baris. Nilai yang dipakai model = kotak ketik."""
+    c_sl, c_nm = st.columns([3.2, 1], gap="small", vertical_alignment="bottom")
+    c_sl.slider(label, lo, smax, key=k, on_change=_from_slider, args=(k,), help=help)
+    return c_nm.number_input(label, min_value=lo, max_value=hmax, step=1, key=k + "_n",
+                             on_change=_from_number, args=(k, smax), label_visibility="collapsed")
 
 
 def clear_result():
@@ -234,46 +235,39 @@ with st.container(key="preset_bar"):
     for col, name in zip(pc, PRESETS):
         col.button(name, on_click=apply_preset, args=(name,), key=f"preset_{name}")
 
-left = st.container()     # form (atas, lebar penuh)
+left = st.container()     # form (atas)
 right = st.container()    # hasil (bawah)
 with left:
     with st.container(key="form_box"):
         html('<div class="form-banner"><b>Form prediksi pembatalan</b><span>10 input</span></div>')
-        st.markdown("##### Soal booking-nya")
-        r1 = st.columns(5, gap="medium")
-        with r1[0]:
+        g1, g2, g3 = st.columns(3, gap="large")
+        with g1:
+            st.markdown("##### 1. Waktu & lama menginap")
             lead_time = num_field("Dipesan berapa hari sebelum menginap?", "in_lead", LEAD_MIN, 365, LEAD_MAX,
                                   help=f"Slider sampai 365 hari; ketik manual sampai {LEAD_MAX} hari (maksimum data latih).")
             st.caption(lead_human(lead_time))
-        with r1[1]:
-            segment = st.selectbox("Dipesan lewat mana?", list(SEGMENT_LABELS), format_func=SEGMENT_LABELS.get,
-                                   key="in_segment", on_change=clear_result)
-        with r1[2]:
-            hotel = st.selectbox("Jenis hotel", list(HOTEL_LABELS), format_func=HOTEL_LABELS.get,
-                                 key="in_hotel", on_change=clear_result)
-        with r1[3]:
             nights = num_field("Berapa malam menginap?", "in_nights", NIGHTS_MIN, NIGHTS_MAX, NIGHTS_MAX)
-        with r1[4]:
             adr = num_field("Tarif rata-rata per malam (€)", "in_adr", ADR_MIN, ADR_MAX, ADR_MAX,
                             help="Satuan euro, sesuai data hotel di Portugal. Median data latih sekitar €98.")
-        st.markdown("##### Soal tamunya")
-        r2 = st.columns(5, gap="medium")
-        with r2[0]:
+        with g2:
+            st.markdown("##### 2. Detail pemesanan")
+            segment = st.selectbox("Dipesan lewat mana?", list(SEGMENT_LABELS), format_func=SEGMENT_LABELS.get,
+                                   key="in_segment", on_change=clear_result)
+            hotel = st.selectbox("Jenis hotel", list(HOTEL_LABELS), format_func=HOTEL_LABELS.get,
+                                 key="in_hotel", on_change=clear_result)
             requests = num_field("Berapa permintaan khusus dari tamu?", "in_requests", REQ_MIN, REQ_MAX, REQ_MAX,
                                  help="Contoh: tambahan bed, lantai tinggi, kamar bebas rokok.")
-        with r2[1]:
+        with g3:
+            st.markdown("##### 3. Profil tamu")
             country = st.selectbox("Tamu berasal dari mana?", country_options, format_func=country_fmt,
                                    key="in_country", on_change=clear_result,
                                    help=f"{len(countries)} negara teratas punya kategori sendiri; negara di luar daftar dipetakan ke 'Negara lain' oleh pipeline.")
-        with r2[2]:
             customer = st.selectbox("Tipe pelanggan", list(CUSTOMER_LABELS), format_func=CUSTOMER_LABELS.get,
                                     key="in_customer", on_change=clear_result)
-        with r2[3]:
             repeat = st.selectbox("Status tamu", [0, 1], format_func=REPEAT_LABELS.get, key="in_repeat", on_change=clear_result)
-        with r2[4]:
-            prev = num_field("Berapa kali tamu pernah membatalkan sebelumnya?", "in_prev", PREV_MIN, PREV_MAX, PREV_MAX,
+            prev = num_field("Berapa kali pernah membatalkan sebelumnya?", "in_prev", PREV_MIN, PREV_MAX, PREV_MAX,
                              help="Riwayat dari reservasi-reservasi tamu yang sama sebelum booking ini.")
-        b1, b2, _sp = st.columns([1.3, 1, 3.5])
+        b1, b2, _sp = st.columns([1.6, 1, 4])
         go = b1.button("Prediksi pembatalan", type="primary", width="stretch")
         b2.button("Atur ulang", on_click=reset_form, width="stretch")
 
