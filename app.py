@@ -31,22 +31,23 @@ DEFAULTS = {"in_lead": 60, "in_country": "PRT" if "PRT" in countries else countr
 for k, v in DEFAULTS.items():
     st.session_state.setdefault(k, v)
 
+# Preset bervariasi: risiko rendah sampai tinggi (bukan semuanya "aman")
 PRESETS = {
     "Pesan online jauh hari": {"in_lead": 220, "in_country": "PRT", "in_segment": "Online TA", "in_requests": 0,
                                "in_customer": "Transient", "in_hotel": "City Hotel", "in_nights": 3, "in_adr": 95,
                                "in_prev": 0, "in_repeat": 0},
-    "Tamu perusahaan, mepet": {"in_lead": 3, "in_country": "GBR", "in_segment": "Corporate", "in_requests": 2,
-                               "in_customer": "Contract", "in_hotel": "City Hotel", "in_nights": 2, "in_adr": 110,
-                               "in_prev": 0, "in_repeat": 1},
-    "Liburan keluarga": {"in_lead": 45, "in_country": "DEU", "in_segment": "Direct", "in_requests": 3,
+    "Online, lead menengah": {"in_lead": 90, "in_country": "GBR", "in_segment": "Online TA", "in_requests": 0,
+                              "in_customer": "Transient", "in_hotel": "City Hotel", "in_nights": 3, "in_adr": 110,
+                              "in_prev": 0, "in_repeat": 0},
+    "Agen offline, jauh hari": {"in_lead": 170, "in_country": "PRT", "in_segment": "Offline TA/TO", "in_requests": 0,
+                                "in_customer": "Transient", "in_hotel": "Resort Hotel", "in_nights": 5, "in_adr": 80,
+                                "in_prev": 0, "in_repeat": 0},
+    "Liburan keluarga": {"in_lead": 45, "in_country": "DEU", "in_segment": "Direct", "in_requests": 1,
                          "in_customer": "Transient-Party", "in_hotel": "Resort Hotel", "in_nights": 7, "in_adr": 150,
-                         "in_prev": 0, "in_repeat": 1},
-    "Rombongan tur": {"in_lead": 150, "in_country": "ESP", "in_segment": "Groups", "in_requests": 0,
-                      "in_customer": "Group", "in_hotel": "Resort Hotel", "in_nights": 5, "in_adr": 70,
-                      "in_prev": 0, "in_repeat": 0},
-    "Backpacker dadakan": {"in_lead": 1, "in_country": "FRA", "in_segment": "Online TA", "in_requests": 1,
-                           "in_customer": "Transient", "in_hotel": "City Hotel", "in_nights": 1, "in_adr": 60,
-                           "in_prev": 0, "in_repeat": 0},
+                         "in_prev": 0, "in_repeat": 0},
+    "Tamu perusahaan, mepet": {"in_lead": 3, "in_country": "GBR", "in_segment": "Corporate", "in_requests": 1,
+                               "in_customer": "Contract", "in_hotel": "City Hotel", "in_nights": 2, "in_adr": 110,
+                               "in_prev": 0, "in_repeat": 0},
     "Pernah batal sebelumnya": {"in_lead": 120, "in_country": OTHER_COUNTRY, "in_segment": "Offline TA/TO", "in_requests": 0,
                                 "in_customer": "Transient", "in_hotel": "City Hotel", "in_nights": 4, "in_adr": 100,
                                 "in_prev": 2, "in_repeat": 0},
@@ -318,7 +319,7 @@ with right:  # FR-04, FR-05, FR-06
         """)
     else:
         p, lab = res["proba"], res["label"]
-        pct = f"{p*100:.0f}"
+        pct = "&lt;1" if p * 100 < 1 else f"{p*100:.0f}"   # hindari tampil "0%" untuk probabilitas sangat kecil
         cls, tag = ("warn", "⚠ Berpotensi dibatalkan") if lab else ("ok", "✓ Tidak berpotensi dibatalkan")
         verdict = "berpotensi dibatalkan" if lab else "tidak berpotensi dibatalkan"
         z_code, z_text = threshold_zone(p, thr)
