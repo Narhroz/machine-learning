@@ -148,25 +148,25 @@ def build_comparison_chart(inputs, proba, threshold, label):
         )
     )
     thr_pct = threshold * 100.0
-    fig.add_vline(
-        x=thr_pct,
-        line_width=2,
-        line_dash="dash",
-        line_color="#F59E0B",
-        annotation_text=f"Batas {thr_pct:.0f}%",
-        annotation_position="top right",
-        annotation_font=dict(size=11, color="#B45309"),
+    fig.add_vline(x=thr_pct, line_width=2, line_dash="dash", line_color="#F59E0B")
+    # Label batas diletakkan DI ATAS area plot (yref="paper"), jadi tidak tertimpa batang
+    fig.add_annotation(
+        x=thr_pct, y=1.0, xref="x", yref="paper",
+        text=f"Batas {thr_pct:.0f}%", showarrow=False,
+        yanchor="bottom", xanchor="center", yshift=4,
+        font=dict(size=11, color="#B45309"),
+        bgcolor="#FFFBEB", bordercolor="#F59E0B", borderwidth=1, borderpad=3,
     )
     fig.update_layout(
         title=dict(
             text="Perbandingan dengan Rata-rata Historis (%)",
             font=dict(family="Bricolage Grotesque, sans-serif", size=14, color="#0F172A"),
-            x=0,
+            x=0, y=0.98, yanchor="top",
         ),
         xaxis=dict(range=[0, max(max(values) + 14, thr_pct + 15, 55)], title=None, showgrid=True, gridcolor="#E2E8F0"),
         yaxis=dict(title=None, tickfont=dict(size=11.5, color="#0F172A"), automargin=True),
-        margin=dict(l=4, r=32, t=30, b=10),
-        height=300,
+        margin=dict(l=4, r=32, t=64, b=10),
+        height=334,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family="Figtree, sans-serif", color="#0F172A"),
