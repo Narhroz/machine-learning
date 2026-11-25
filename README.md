@@ -58,10 +58,10 @@ hotel-booking-cancellation/
 ├── pages/
 │   ├── 1_Model_Evaluation.py
 │   └── 2_About_Project.py
-├── assets/team/                # foto anggota (opsional)
+├── assets/team/                
 ├── data/
-│   ├── raw/                    # taruh hotel_bookings.csv di sini (tidak disertakan)
-│   └── processed/              # train.csv, test.csv (hasil notebook 03)
+│   ├── raw/                    
+│   └── processed/              # train.csv, test.csv
 ├── models/final_model.joblib   # pipeline + model + threshold
 ├── notebooks/                  # 01_data_understanding ... 05_model_evaluation
 ├── reports/                    # figures/, model_comparison.csv, preprocessing_config.json, data_audit_summary.csv
