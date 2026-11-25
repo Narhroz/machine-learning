@@ -1,10 +1,12 @@
 # StayCheck - dependensi aplikasi Streamlit
+# scikit-learn dan xgboost dikunci ke versi saat training (PRD bagian 7.8)
+# agar model .joblib dapat dimuat tanpa InconsistentVersionWarning.
 
 streamlit>=1.50        # app memakai width="stretch" (st.image, st.dataframe, st.button, st.plotly_chart)
 pandas>=3.0.3
 numpy>=2.4.6
-scikit-learn>=1.9.0    # OneHotEncoder(sparse_output, infrequent_if_exist), FunctionTransformer(feature_names_out)
-xgboost>=3.4.1
+scikit-learn==1.9.0    # OneHotEncoder(sparse_output, infrequent_if_exist), FunctionTransformer(feature_names_out)
+xgboost==3.4.1
 joblib>=1.5.3
 plotly>=6.0            # grafik pembanding (marker cornerradius)
 jinja2>=3.1            # dibutuhkan pandas Styler di halaman Evaluasi model

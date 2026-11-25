@@ -6,8 +6,8 @@ StayCheck adalah aplikasi web (Streamlit) yang memperkirakan apakah sebuah reser
 
 > Prototipe edukasi. Hasil prediksi adalah estimasi, bukan kepastian, dan tidak boleh menjadi satu-satunya dasar untuk menolak atau memperlakukan pelanggan secara berbeda.
 
-- **Kelas / Kelompok:** [ISI KELAS] / [ISI NAMA KELOMPOK]
-- **Link aplikasi (jika ada):** [ISI LINK DEPLOYMENT]
+- **Kelas / Kelompok:** B / Kelompok 9
+- **Link aplikasi:** https://staypredict.streamlit.app/
 - **Link video demo:** [ISI LINK VIDEO]
 
 ## Anggota
@@ -59,20 +59,20 @@ hotel-booking-cancellation/
 ├── pages/
 │   ├── 1_Model_Evaluation.py
 │   └── 2_About_Project.py
-├── assets/team/                
+├── assets/team/                # foto anggota (opsional)
 ├── data/
-│   ├── raw/                    
-│   └── processed/              
+│   ├── raw/                    # taruh hotel_bookings.csv di sini (tidak disertakan)
+│   └── processed/              # train.csv, test.csv (hasil notebook 03)
 ├── models/final_model.joblib   # pipeline + model + threshold
-├── notebooks/                  
-├── reports/                    
+├── notebooks/                  # 01_data_understanding ... 05_model_evaluation
+├── reports/                    # figures/, model_comparison.csv, preprocessing_config.json, data_audit_summary.csv
 ├── requirements.txt
 └── README.md
 ```
 
 ## Menjalankan aplikasi
 
-Butuh Python 3.10 atau lebih baru dan koneksi internet (foto hotel di beranda dimuat dari Unsplash).
+Versi online tersedia di https://staypredict.streamlit.app/. Untuk menjalankan lokal, butuh Python 3.10 atau lebih baru dan koneksi internet (foto hotel di beranda dimuat dari Unsplash).
 
 ```bash
 # 1. Masuk ke folder proyek
@@ -94,7 +94,7 @@ streamlit run app.py
 
 Aplikasi terbuka di `http://localhost:8501`. Pastikan folder `models/` dan `reports/` ikut ada; tanpa `models/final_model.joblib` aplikasi menampilkan pesan error.
 
-**Versi library:** model disimpan dengan scikit-learn versi tertentu. Gunakan versi yang sama dengan saat training (lihat `requirements.txt`) agar tidak muncul `InconsistentVersionWarning`.
+**Versi library:** model disimpan dengan scikit-learn versi tertentu. Model dilatih dengan scikit-learn 1.9.0 dan xgboost 3.4.1; keduanya dikunci di `requirements.txt` agar tidak muncul `InconsistentVersionWarning`.
 
 ## Mengulang eksperimen (notebook)
 
