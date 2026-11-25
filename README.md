@@ -8,7 +8,6 @@ StayCheck adalah aplikasi web (Streamlit) yang memperkirakan apakah sebuah reser
 
 - **Kelas / Kelompok:** B / Kelompok 9
 - **Link aplikasi:** https://staypredict.streamlit.app/
-- **Link video demo:** [ISI LINK VIDEO]
 
 ## Anggota
 
